@@ -228,21 +228,39 @@ function showSignOutModal() {
   });
 }
 
-function showNewRequestModal(user) {
+const SERVICE_OPTIONS = [
+  { value: 'brand',   code: 'SVC / 01', label: 'Brand systems',      meta: 'typical \u00b7 48 hours' },
+  { value: 'web',     code: 'SVC / 02', label: 'Websites & pages',   meta: 'typical \u00b7 3\u201372 hours' },
+  { value: 'ads',     code: 'SVC / 03', label: 'Ads & campaigns',    meta: 'typical \u00b7 6 hours' },
+  { value: 'content', code: 'SVC / 04', label: 'Content engine',     meta: 'retainer \u00b7 from $4k/mo' },
+  { value: 'video',   code: 'SVC / 05', label: 'Video & motion',     meta: 'typical \u00b7 45 min per cut' },
+];
+
+function showNewRequestModal(user, preselectService) {
+  const serviceOptionsHtml = SERVICE_OPTIONS.map(opt =>
+    '<option value="' + opt.value + '"' + (opt.value === preselectService ? ' selected' : '') + '>' +
+      escapeHtml(opt.code + ' \u2014 ' + opt.label + ' (' + opt.meta + ')') +
+    '</option>'
+  ).join('');
+
   openModal({
     eyebrow: 'New Request',
-    title: 'Start a new <em>project</em>.',
+    title: 'Brief a new <em>project</em>.',
     bodyHtml:
       '<div class="modal-field">' +
+        '<label class="form-label" for="modal-project-service">Service</label>' +
+        '<select class="select" id="modal-project-service">' + serviceOptionsHtml + '</select>' +
+      '</div>' +
+      '<div class="modal-field">' +
         '<label class="form-label" for="modal-project-name">Project Name</label>' +
-        '<input class="input" id="modal-project-name" type="text" placeholder="e.g. Invoice Reconciliation Bot" autocomplete="off" maxlength="120" />' +
+        '<input class="input" id="modal-project-name" type="text" placeholder="e.g. Q3 Brand Refresh" autocomplete="off" maxlength="120" />' +
       '</div>' +
       '<div class="modal-field">' +
-        '<label class="form-label" for="modal-project-desc">What are you trying to solve?</label>' +
-        '<textarea class="textarea" id="modal-project-desc" rows="4" placeholder="A short paragraph is plenty \u2014 we\u2019ll follow up with questions." maxlength="800"></textarea>' +
+        '<label class="form-label" for="modal-project-desc">Brief</label>' +
+        '<textarea class="textarea" id="modal-project-desc" rows="4" placeholder="Audience, goals, references, deadlines \u2014 a paragraph is plenty." maxlength="800"></textarea>' +
       '</div>' +
       '<div class="modal-field">' +
-        '<label class="form-label" for="modal-project-priority">Priority</label>' +
+        '<label class="form-label" for="modal-project-priority">Timeline</label>' +
         '<select class="select" id="modal-project-priority">' +
           '<option value="discovery">Discovery \u2014 still scoping</option>' +
           '<option value="in_progress">Standard \u2014 start when ready</option>' +
@@ -250,10 +268,11 @@ function showNewRequestModal(user) {
         '</select>' +
       '</div>' +
       '<div class="modal-error" data-modal-error hidden></div>',
-    confirmLabel: 'Submit Request',
+    confirmLabel: 'Submit Brief',
     cancelLabel: 'Cancel',
     initialFocus: '#modal-project-name',
     onConfirm: async (root) => {
+      const serviceEl = root.querySelector('#modal-project-service');
       const nameEl = root.querySelector('#modal-project-name');
       const descEl = root.querySelector('#modal-project-desc');
       const priorityEl = root.querySelector('#modal-project-priority');
@@ -263,11 +282,17 @@ function showNewRequestModal(user) {
         nameEl.focus();
         return false;
       }
+      const serviceVal = serviceEl ? serviceEl.value : null;
+      const serviceOpt = SERVICE_OPTIONS.find(o => o.value === serviceVal);
+      const userDesc = (descEl.value || '').trim();
+      const composedDesc = serviceOpt
+        ? '[' + serviceOpt.code + ' \u2014 ' + serviceOpt.label + '] ' + (userDesc || '')
+        : (userDesc || null);
       setModalError(root, '');
       setModalBusy(root, true, 'Submitting\u2026');
       const res = await data.createProject(user.id, {
         name,
-        description: (descEl.value || '').trim() || null,
+        description: composedDesc && composedDesc.trim() ? composedDesc : null,
         status: priorityEl.value || 'discovery',
       });
       if (!res.ok) {
@@ -329,7 +354,8 @@ function wireActionButtons(user) {
   $$('[data-action="new-project"]').forEach(el => {
     el.addEventListener('click', (e) => {
       e.preventDefault();
-      showNewRequestModal(user);
+      const pick = el.getAttribute('data-service-pick') || null;
+      showNewRequestModal(user, pick);
     });
   });
 }
