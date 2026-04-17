@@ -1,0 +1,126 @@
+import { supabase } from './supabase.js';
+
+// All fetchers fail soft: if the Supabase table doesn't exist yet,
+// or RLS blocks the read, we return an empty result so the UI shows
+// its empty state instead of crashing. Wire up the tables listed in
+// README-DB.md when you're ready to start populating data.
+
+async function safeList(fn) {
+  try {
+    const result = await fn();
+    if (result.error) {
+      if (!/does not exist|relation .* does not exist|schema cache/i.test(result.error.message || '')) {
+        console.warn('[portal]', result.error.message);
+      }
+      return [];
+    }
+    return result.data || [];
+  } catch (e) {
+    console.warn('[portal] query error:', e);
+    return [];
+  }
+}
+
+async function safeOne(fn) {
+  try {
+    const result = await fn();
+    if (result.error) return null;
+    return result.data || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+export function getProjects(userId) {
+  return safeList(() =>
+    supabase
+      .from('projects')
+      .select('id, name, description, status, progress, next_milestone, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+  );
+}
+
+export function getDeliverables(userId) {
+  return safeList(() =>
+    supabase
+      .from('deliverables')
+      .select('id, project_id, project_name, name, file_type, size_label, status, version, url, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+  );
+}
+
+export function getInvoices(userId) {
+  return safeList(() =>
+    supabase
+      .from('invoices')
+      .select('id, number, project_name, amount_cents, issued_at, due_at, paid_at, status, pdf_url')
+      .eq('user_id', userId)
+      .order('issued_at', { ascending: false })
+  );
+}
+
+export function getThreads(userId) {
+  return safeList(() =>
+    supabase
+      .from('message_threads')
+      .select('id, title, preview, project_name, unread_count, status, updated_at')
+      .eq('user_id', userId)
+      .order('updated_at', { ascending: false })
+  );
+}
+
+export function getActivity(userId, limit = 10) {
+  return safeList(() =>
+    supabase
+      .from('activity')
+      .select('id, text, project_name, unread, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
+}
+
+export function getProfile(userId) {
+  return safeOne(() =>
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+  );
+}
+
+export async function upsertProfile(userId, patch) {
+  try {
+    const { error } = await supabase
+      .from('profiles')
+      .upsert(
+        { user_id: userId, ...patch, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      );
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || 'Unknown error' };
+  }
+}
+
+export async function createProject(userId, fields) {
+  try {
+    const { error } = await supabase
+      .from('projects')
+      .insert({
+        user_id: userId,
+        status: 'discovery',
+        progress: 0,
+        ...fields,
+        updated_at: new Date().toISOString(),
+      });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || 'Unknown error' };
+  }
+}

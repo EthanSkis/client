@@ -67,6 +67,37 @@ body::before {
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
+/* ============ Auth gate + splash ============ */
+.splash {
+  position: fixed; inset: 0;
+  z-index: 9999;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--ink-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+}
+.splash .dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.35);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+html[data-auth="signed-in"] .splash { display: none; }
+
+.app { opacity: 0; transition: opacity 0.25s var(--ease); }
+html[data-auth="signed-in"] .app { opacity: 1; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.85); }
+}
+
 /* ============ App shell ============ */
 .app {
   position: relative;
@@ -182,6 +213,11 @@ body::before {
   border-radius: 2px;
   transition: background 0.2s var(--ease), color 0.2s var(--ease);
   position: relative;
+  background: transparent;
+  border: 0;
+  font-family: var(--mono);
+  cursor: pointer;
+  text-align: left;
 }
 .nav-item:hover { background: rgba(243, 241, 234, 0.03); color: var(--ink); }
 .nav-item[aria-current="page"] {
@@ -239,7 +275,7 @@ body::before {
   font-weight: 300;
   color: var(--ink-dim);
 }
-.page-head .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.page-head .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
 /* ============ Buttons ============ */
 .btn {
@@ -260,6 +296,7 @@ body::before {
   transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
 }
 .btn:hover { background: rgba(243, 241, 234, 0.06); border-color: rgba(243, 241, 234, 0.22); }
+.btn[disabled] { opacity: 0.6; cursor: wait; }
 .btn-primary {
   background: var(--accent);
   color: #0a0b0d;
@@ -269,6 +306,14 @@ body::before {
 .btn-sm { padding: 7px 12px; font-size: 10px; letter-spacing: 0.14em; }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--ink-dim); }
 .btn-ghost:hover { background: rgba(243, 241, 234, 0.04); color: var(--ink); border-color: transparent; }
+
+.save-msg {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--ink-dim);
+  min-width: 80px;
+}
 
 /* ============ Panels ============ */
 .panel {
