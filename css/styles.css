@@ -871,9 +871,7 @@ html[data-auth="signed-in"] .app { opacity: 1; }
   position: relative;
   width: 100%;
   max-width: 520px;
-  max-height: calc(100vh - 48px);
-  max-height: calc(100dvh - 48px);
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--bg-elev);
   border: 1px solid var(--rule-strong);
   border-radius: 2px;
@@ -996,15 +994,11 @@ html[data-auth="signed-in"] .app { opacity: 1; }
 }
 
 @media (max-width: 560px) {
-  .modal-backdrop { padding: 0; }
+  .modal-backdrop { padding: 16px; }
   .modal {
     max-width: 100%;
-    min-height: 100dvh;
-    padding: 28px 20px 22px;
-    border: 0;
-    border-radius: 0;
+    padding: 24px 20px 20px;
   }
-  .modal::before, .modal::after { display: none; }
   .modal-actions { flex-direction: column-reverse; }
   .modal-actions .btn { width: 100%; justify-content: center; }
 }
