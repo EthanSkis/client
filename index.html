@@ -101,10 +101,15 @@
       </div>
     </div>
 
-    <section class="panel bracketed services-panel">
+    <section class="panel bracketed services-panel" data-services-panel>
       <div class="panel-head">
-        <h2>Services</h2>
-        <span class="action">Pick one to brief →</span>
+        <div class="panel-head-text">
+          <h2>Services</h2>
+          <span class="panel-sub">Pick one to brief a new project.</span>
+        </div>
+        <button type="button" class="panel-close" data-services-close aria-label="Hide services">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
       </div>
       <div class="services">
 
@@ -160,6 +165,10 @@
 
       </div>
     </section>
+
+    <div class="services-restore" data-services-restore hidden>
+      <button type="button" class="btn btn-sm" data-services-show>Show services</button>
+    </div>
 
     <div class="grid-2">
 
