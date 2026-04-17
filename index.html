@@ -11,7 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<body data-page="dashboard">
+<div class="splash" aria-hidden="true"><span class="dot"></span><span>Checking session…</span></div>
 <div class="grain" aria-hidden="true"></div>
 
 <div class="app">
@@ -22,13 +23,11 @@
       <span class="brand-name">ClearBot<em>/portal</em></span>
     </a>
     <nav class="crumbs" aria-label="Breadcrumb">
-      <span>Portal</span>
-      <span class="sep">/</span>
-      <span class="here">Dashboard</span>
+      <span>Portal</span><span class="sep">/</span><span class="here">Dashboard</span>
     </nav>
     <button class="user" data-user aria-label="Account menu">
-      <span class="name">Acme Co.</span>
-      <span class="avatar" aria-hidden="true">A</span>
+      <span class="name" data-user-name>…</span>
+      <span class="avatar" data-user-initial aria-hidden="true">•</span>
     </button>
   </header>
 
@@ -53,57 +52,52 @@
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
       Invoices
     </a>
-
     <div class="sidebar-group">Account</div>
     <a class="nav-item" data-nav="settings.html" href="settings.html">
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       Settings
     </a>
-    <a class="nav-item" href="https://login.clearbot.io">
+    <button class="nav-item" type="button" data-signout>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       Sign Out
-    </a>
-
+    </button>
     <div class="spacer"></div>
-
-    <div class="foot">
-      <a href="https://clearbot.io">← Main Site</a>
-    </div>
+    <div class="foot"><a href="https://clearbot.io">← Main Site</a></div>
   </aside>
 
   <main class="main">
 
     <div class="page-head">
       <div>
-        <div class="eyebrow">Dashboard · Apr 17, 2026</div>
-        <h1>Good afternoon, <em>Acme</em>.</h1>
+        <div class="eyebrow" data-today>Dashboard</div>
+        <h1 data-greeting>Welcome back.</h1>
       </div>
       <div class="actions">
         <a href="messages.html" class="btn">Message Us</a>
-        <a href="#" class="btn btn-primary">+ New Request</a>
+        <button type="button" class="btn btn-primary" data-action="new-project">+ New Request</button>
       </div>
     </div>
 
     <div class="tiles">
-      <div class="tile">
+      <div class="tile" data-tile="active-projects">
         <div class="label">Active Projects</div>
-        <div class="val">3</div>
-        <div class="delta">1 shipping this week</div>
+        <div class="val">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
-      <div class="tile">
+      <div class="tile" data-tile="pending-review">
         <div class="label">Pending Review</div>
-        <div class="val">2</div>
-        <div class="delta">Oldest · 2 days</div>
+        <div class="val">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
-      <div class="tile">
+      <div class="tile" data-tile="open-invoices">
         <div class="label">Open Invoices</div>
-        <div class="val">$4,820<small>.00</small></div>
-        <div class="delta">Next due · Apr 28</div>
+        <div class="val">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
-      <div class="tile">
+      <div class="tile" data-tile="unread-messages">
         <div class="label">Unread Messages</div>
-        <div class="val">5</div>
-        <div class="delta">Across 2 threads</div>
+        <div class="val">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
     </div>
 
@@ -114,48 +108,7 @@
           <h2>Recent Activity</h2>
           <a class="action" href="#">View all →</a>
         </div>
-        <div class="feed">
-          <div class="feed-item new">
-            <span class="feed-dot" aria-hidden="true"></span>
-            <div class="feed-text">
-              <span class="proj">Inventory Automation</span>
-              Draft v2 pushed for your review. <em>Includes Shopify &amp; QuickBooks sync.</em>
-            </div>
-            <div class="feed-time">12m ago</div>
-          </div>
-          <div class="feed-item new">
-            <span class="feed-dot" aria-hidden="true"></span>
-            <div class="feed-text">
-              <span class="proj">Ops Dashboard</span>
-              Ethan replied in thread. <em>Re: Stripe webhooks.</em>
-            </div>
-            <div class="feed-time">1h ago</div>
-          </div>
-          <div class="feed-item">
-            <span class="feed-dot" aria-hidden="true"></span>
-            <div class="feed-text">
-              <span class="proj">Ops Dashboard</span>
-              Milestone 3 marked complete.
-            </div>
-            <div class="feed-time">yesterday</div>
-          </div>
-          <div class="feed-item">
-            <span class="feed-dot" aria-hidden="true"></span>
-            <div class="feed-text">
-              <span class="proj">Inventory Automation</span>
-              Invoice #INV-00213 issued for $2,400.
-            </div>
-            <div class="feed-time">2d ago</div>
-          </div>
-          <div class="feed-item">
-            <span class="feed-dot" aria-hidden="true"></span>
-            <div class="feed-text">
-              <span class="proj">Lead Router · Discovery</span>
-              Kickoff call scheduled for Apr 22, 2:00 PM.
-            </div>
-            <div class="feed-time">3d ago</div>
-          </div>
-        </div>
+        <div class="feed" data-activity></div>
       </section>
 
       <section class="panel">
@@ -163,38 +116,7 @@
           <h2>Your Projects</h2>
           <a class="action" href="projects.html">All →</a>
         </div>
-        <div class="proj-list">
-          <a class="proj-card" href="projects.html">
-            <div class="proj-card-head">
-              <span class="proj-card-name">Inventory Automation</span>
-              <span class="badge accent"><span class="dot"></span>In Review</span>
-            </div>
-            <div class="proj-card-bar">
-              <span class="progress"><span class="progress-bar" style="width:72%"></span></span>
-              <span class="mono">72%</span>
-            </div>
-          </a>
-          <a class="proj-card" href="projects.html">
-            <div class="proj-card-head">
-              <span class="proj-card-name">Ops Dashboard</span>
-              <span class="badge"><span class="dot"></span>In Progress</span>
-            </div>
-            <div class="proj-card-bar">
-              <span class="progress"><span class="progress-bar" style="width:45%"></span></span>
-              <span class="mono">45%</span>
-            </div>
-          </a>
-          <a class="proj-card" href="projects.html">
-            <div class="proj-card-head">
-              <span class="proj-card-name">Lead Router</span>
-              <span class="badge warn"><span class="dot"></span>Discovery</span>
-            </div>
-            <div class="proj-card-bar">
-              <span class="progress"><span class="progress-bar" style="width:10%"></span></span>
-              <span class="mono">10%</span>
-            </div>
-          </a>
-        </div>
+        <div class="proj-list" data-projects-sidebar></div>
       </section>
 
     </div>
@@ -203,6 +125,6 @@
 
 </div>
 
-<script src="js/app.js" defer></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

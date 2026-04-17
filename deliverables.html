@@ -10,7 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<body data-page="deliverables">
+<div class="splash" aria-hidden="true"><span class="dot"></span><span>Checking session…</span></div>
 <div class="grain" aria-hidden="true"></div>
 
 <div class="app">
@@ -24,8 +25,8 @@
       <span>Portal</span><span class="sep">/</span><span class="here">Deliverables</span>
     </nav>
     <button class="user" data-user aria-label="Account menu">
-      <span class="name">Acme Co.</span>
-      <span class="avatar" aria-hidden="true">A</span>
+      <span class="name" data-user-name>…</span>
+      <span class="avatar" data-user-initial aria-hidden="true">•</span>
     </button>
   </header>
 
@@ -55,10 +56,10 @@
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       Settings
     </a>
-    <a class="nav-item" href="https://login.clearbot.io">
+    <button class="nav-item" type="button" data-signout>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       Sign Out
-    </a>
+    </button>
     <div class="spacer"></div>
     <div class="foot"><a href="https://clearbot.io">← Main Site</a></div>
   </aside>
@@ -72,101 +73,15 @@
       </div>
       <div class="actions">
         <a href="#" class="btn">Filter</a>
-        <a href="#" class="btn">Download All</a>
       </div>
     </div>
 
-    <section class="section">
-      <div class="section-head">
-        <h2>Inventory Automation</h2>
-        <span class="sub">3 files · 1 pending review</span>
-      </div>
-      <div class="files">
-        <a class="file" href="#">
-          <span class="file-ico">PDF</span>
-          <div>
-            <div class="file-name">Inventory Automation — Draft v2</div>
-            <div class="file-meta">4.2 MB · Updated 12m ago</div>
-          </div>
-          <span class="badge accent"><span class="dot"></span>Needs Review</span>
-          <span class="mono file-col-hide">v2.1.0</span>
-          <a class="btn btn-sm" href="#">Open</a>
-        </a>
-        <a class="file" href="#">
-          <span class="file-ico">ZIP</span>
-          <div>
-            <div class="file-name">Automation scripts bundle</div>
-            <div class="file-meta">18.0 MB · Updated 2d ago</div>
-          </div>
-          <span class="badge ok"><span class="dot"></span>Approved</span>
-          <span class="mono file-col-hide">v2.0.3</span>
-          <a class="btn btn-sm" href="#">Open</a>
-        </a>
-        <a class="file" href="#">
-          <span class="file-ico">MD</span>
-          <div>
-            <div class="file-name">Runbook — Shopify sync</div>
-            <div class="file-meta">22 KB · Updated 4d ago</div>
-          </div>
-          <span class="badge ok"><span class="dot"></span>Approved</span>
-          <span class="mono file-col-hide">v1.4.0</span>
-          <a class="btn btn-sm" href="#">Open</a>
-        </a>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <h2>Ops Dashboard</h2>
-        <span class="sub">2 files</span>
-      </div>
-      <div class="files">
-        <a class="file" href="#">
-          <span class="file-ico">FIG</span>
-          <div>
-            <div class="file-name">Dashboard design spec</div>
-            <div class="file-meta">Figma link · Updated 1h ago</div>
-          </div>
-          <span class="badge warn"><span class="dot"></span>In Progress</span>
-          <span class="mono file-col-hide">v0.7</span>
-          <a class="btn btn-sm" href="#">Open</a>
-        </a>
-        <a class="file" href="#">
-          <span class="file-ico">PDF</span>
-          <div>
-            <div class="file-name">Milestone 2 summary</div>
-            <div class="file-meta">1.8 MB · Updated yesterday</div>
-          </div>
-          <span class="badge ok"><span class="dot"></span>Approved</span>
-          <span class="mono file-col-hide">v1.0.0</span>
-          <a class="btn btn-sm" href="#">Open</a>
-        </a>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <h2>Onboarding Pipeline</h2>
-        <span class="sub">1 file · shipped</span>
-      </div>
-      <div class="files">
-        <a class="file" href="#">
-          <span class="file-ico">PDF</span>
-          <div>
-            <div class="file-name">Final handoff document</div>
-            <div class="file-meta">2.9 MB · Delivered Mar 28</div>
-          </div>
-          <span class="badge ok"><span class="dot"></span>Shipped</span>
-          <span class="mono file-col-hide">v1.0.0</span>
-          <a class="btn btn-sm" href="#">Open</a>
-        </a>
-      </div>
-    </section>
+    <div data-deliverables></div>
 
   </main>
 
 </div>
 
-<script src="js/app.js" defer></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

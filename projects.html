@@ -10,7 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<body data-page="projects">
+<div class="splash" aria-hidden="true"><span class="dot"></span><span>Checking session…</span></div>
 <div class="grain" aria-hidden="true"></div>
 
 <div class="app">
@@ -24,8 +25,8 @@
       <span>Portal</span><span class="sep">/</span><span class="here">Projects</span>
     </nav>
     <button class="user" data-user aria-label="Account menu">
-      <span class="name">Acme Co.</span>
-      <span class="avatar" aria-hidden="true">A</span>
+      <span class="name" data-user-name>…</span>
+      <span class="avatar" data-user-initial aria-hidden="true">•</span>
     </button>
   </header>
 
@@ -55,10 +56,10 @@
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       Settings
     </a>
-    <a class="nav-item" href="https://login.clearbot.io">
+    <button class="nav-item" type="button" data-signout>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       Sign Out
-    </a>
+    </button>
     <div class="spacer"></div>
     <div class="foot"><a href="https://clearbot.io">← Main Site</a></div>
   </aside>
@@ -72,11 +73,11 @@
       </div>
       <div class="actions">
         <a href="#" class="btn">Archived</a>
-        <a href="#" class="btn btn-primary">+ New Request</a>
+        <button type="button" class="btn btn-primary" data-action="new-project">+ New Request</button>
       </div>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-wrap" data-projects-wrap>
       <table class="table">
         <thead>
           <tr>
@@ -87,75 +88,15 @@
             <th>Updated</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div class="proj-name">Inventory Automation</div>
-              <div class="sub">Shopify · QuickBooks · Klaviyo</div>
-            </td>
-            <td><span class="badge accent"><span class="dot"></span>In Review</span></td>
-            <td style="min-width:160px;">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <span class="progress"><span class="progress-bar" style="width:72%"></span></span>
-                <span class="mono">72%</span>
-              </div>
-            </td>
-            <td class="mono">Stakeholder sign-off</td>
-            <td class="mono">12m ago</td>
-          </tr>
-          <tr>
-            <td>
-              <div class="proj-name">Ops Dashboard</div>
-              <div class="sub">Retool · Stripe · Slack</div>
-            </td>
-            <td><span class="badge"><span class="dot"></span>In Progress</span></td>
-            <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <span class="progress"><span class="progress-bar" style="width:45%"></span></span>
-                <span class="mono">45%</span>
-              </div>
-            </td>
-            <td class="mono">Webhook integration</td>
-            <td class="mono">1h ago</td>
-          </tr>
-          <tr>
-            <td>
-              <div class="proj-name">Lead Router</div>
-              <div class="sub">HubSpot · Gmail · Notion</div>
-            </td>
-            <td><span class="badge warn"><span class="dot"></span>Discovery</span></td>
-            <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <span class="progress"><span class="progress-bar" style="width:10%"></span></span>
-                <span class="mono">10%</span>
-              </div>
-            </td>
-            <td class="mono">Kickoff · Apr 22</td>
-            <td class="mono">3d ago</td>
-          </tr>
-          <tr>
-            <td>
-              <div class="proj-name">Onboarding Pipeline</div>
-              <div class="sub">Typeform · Airtable · DocuSign</div>
-            </td>
-            <td><span class="badge ok"><span class="dot"></span>Shipped</span></td>
-            <td>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <span class="progress"><span class="progress-bar" style="width:100%"></span></span>
-                <span class="mono">100%</span>
-              </div>
-            </td>
-            <td class="mono">—</td>
-            <td class="mono">Mar 28</td>
-          </tr>
-        </tbody>
+        <tbody data-projects-table></tbody>
       </table>
     </div>
+    <div data-projects-empty></div>
 
   </main>
 
 </div>
 
-<script src="js/app.js" defer></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
