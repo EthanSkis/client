@@ -10,7 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/styles.css" />
 </head>
-<body>
+<body data-page="invoices">
+<div class="splash" aria-hidden="true"><span class="dot"></span><span>Checking session…</span></div>
 <div class="grain" aria-hidden="true"></div>
 
 <div class="app">
@@ -24,8 +25,8 @@
       <span>Portal</span><span class="sep">/</span><span class="here">Invoices</span>
     </nav>
     <button class="user" data-user aria-label="Account menu">
-      <span class="name">Acme Co.</span>
-      <span class="avatar" aria-hidden="true">A</span>
+      <span class="name" data-user-name>…</span>
+      <span class="avatar" data-user-initial aria-hidden="true">•</span>
     </button>
   </header>
 
@@ -55,10 +56,10 @@
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       Settings
     </a>
-    <a class="nav-item" href="https://login.clearbot.io">
+    <button class="nav-item" type="button" data-signout>
       <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       Sign Out
-    </a>
+    </button>
     <div class="spacer"></div>
     <div class="foot"><a href="https://clearbot.io">← Main Site</a></div>
   </aside>
@@ -71,35 +72,34 @@
         <h1>Clean books, <em>quietly kept</em>.</h1>
       </div>
       <div class="actions">
-        <a href="#" class="btn">Payment Method</a>
-        <a href="#" class="btn btn-primary">Pay Next Due</a>
+        <a href="settings.html" class="btn">Payment Method</a>
       </div>
     </div>
 
     <div class="tiles">
-      <div class="tile">
+      <div class="tile" data-tile="outstanding">
         <div class="label">Outstanding</div>
-        <div class="val">$4,820<small>.00</small></div>
-        <div class="delta">1 open invoice</div>
+        <div class="val">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
-      <div class="tile">
+      <div class="tile" data-tile="paid-ytd">
         <div class="label">Paid YTD</div>
-        <div class="val">$28,400<small>.00</small></div>
-        <div class="delta">4 invoices settled</div>
+        <div class="val">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
-      <div class="tile">
+      <div class="tile" data-tile="next-due">
         <div class="label">Next Due</div>
-        <div class="val">Apr 28</div>
-        <div class="delta">11 days away</div>
+        <div class="val">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
-      <div class="tile">
+      <div class="tile" data-tile="payment-method">
         <div class="label">Payment Method</div>
-        <div class="val" style="font-size:24px; letter-spacing:0.04em;">ACH · •••• 4418</div>
-        <div class="delta">Primary · Auto-pay on</div>
+        <div class="val" style="font-size:24px; letter-spacing:0.04em;">—</div>
+        <div class="delta">&nbsp;</div>
       </div>
     </div>
 
-    <div class="table-wrap">
+    <div class="table-wrap" data-invoices-wrap>
       <table class="table">
         <thead>
           <tr>
@@ -111,70 +111,15 @@
             <th></th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div class="proj-name">INV-00217</div>
-              <div class="sub">Due Apr 28</div>
-            </td>
-            <td class="mono">Inventory Automation</td>
-            <td class="num">$4,820.00</td>
-            <td class="mono">Apr 14</td>
-            <td><span class="badge warn"><span class="dot"></span>Due</span></td>
-            <td><a class="btn btn-sm" href="#">Open</a></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="proj-name">INV-00213</div>
-              <div class="sub">Paid Apr 16</div>
-            </td>
-            <td class="mono">Inventory Automation</td>
-            <td class="num">$2,400.00</td>
-            <td class="mono">Apr 1</td>
-            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
-            <td><a class="btn btn-sm" href="#">PDF</a></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="proj-name">INV-00205</div>
-              <div class="sub">Paid Mar 30</div>
-            </td>
-            <td class="mono">Ops Dashboard</td>
-            <td class="num">$6,400.00</td>
-            <td class="mono">Mar 15</td>
-            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
-            <td><a class="btn btn-sm" href="#">PDF</a></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="proj-name">INV-00198</div>
-              <div class="sub">Paid Feb 28</div>
-            </td>
-            <td class="mono">Onboarding Pipeline</td>
-            <td class="num">$12,800.00</td>
-            <td class="mono">Feb 15</td>
-            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
-            <td><a class="btn btn-sm" href="#">PDF</a></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="proj-name">INV-00184</div>
-              <div class="sub">Paid Jan 30</div>
-            </td>
-            <td class="mono">Onboarding Pipeline</td>
-            <td class="num">$6,800.00</td>
-            <td class="mono">Jan 15</td>
-            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
-            <td><a class="btn btn-sm" href="#">PDF</a></td>
-          </tr>
-        </tbody>
+        <tbody data-invoices-table></tbody>
       </table>
     </div>
+    <div data-invoices-empty></div>
 
   </main>
 
 </div>
 
-<script src="js/app.js" defer></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
