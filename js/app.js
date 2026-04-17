@@ -317,7 +317,7 @@ function injectSprite() {
 }
 
 function markActiveNav() {
-  const path = (location.pathname.split('/').pop() || 'index.html').toLowerCase() || 'index.html';
+  const path = (location.pathname.split('/').pop() || 'index').toLowerCase() || 'index';
   $$('[data-nav]').forEach(el => {
     if (el.getAttribute('data-nav').toLowerCase() === path) {
       el.setAttribute('aria-current', 'page');
@@ -464,7 +464,7 @@ async function renderDashboard(user) {
       projRoot.innerHTML = emptyState('No projects yet', 'Click “+ New Request” above to start your first automation project.');
     } else {
       projRoot.innerHTML = projects.slice(0, 3).map(p =>
-        '<a class="proj-card" href="projects.html">' +
+        '<a class="proj-card" href="/projects">' +
           '<div class="proj-card-head">' +
             '<span class="proj-card-name">' + escapeHtml(p.name || 'Untitled') + '</span>' +
             statusBadge(p.status) +
