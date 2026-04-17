@@ -67,6 +67,222 @@ function statusBadge(status) {
   return '<span class="badge ' + hit[0] + '"><span class="dot"></span>' + escapeHtml(hit[1]) + '</span>';
 }
 
+// --- Modal ---
+let activeModalCleanup = null;
+
+function openModal(opts) {
+  const {
+    eyebrow,
+    title,
+    bodyHtml = '',
+    confirmLabel = 'Confirm',
+    cancelLabel = 'Cancel',
+    confirmVariant = 'primary',
+    onConfirm,
+    onCancel,
+    initialFocus,
+  } = opts;
+
+  if (activeModalCleanup) activeModalCleanup();
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.setAttribute('data-modal-root', '');
+  backdrop.innerHTML =
+    '<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">' +
+      '<button class="modal-close" type="button" aria-label="Close" data-modal-close>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>' +
+      '</button>' +
+      '<div class="modal-head">' +
+        (eyebrow ? '<div class="modal-eyebrow">' + escapeHtml(eyebrow) + '</div>' : '') +
+        '<h2 class="modal-title" id="modal-title">' + (title || '') + '</h2>' +
+      '</div>' +
+      '<div class="modal-body">' + bodyHtml + '</div>' +
+      '<div class="modal-actions">' +
+        '<button type="button" class="btn btn-ghost" data-modal-cancel>' + escapeHtml(cancelLabel) + '</button>' +
+        '<button type="button" class="btn btn-' + (confirmVariant === 'danger' ? 'danger' : 'primary') + '" data-modal-confirm>' + escapeHtml(confirmLabel) + '</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(backdrop);
+  const prevOverflow = document.documentElement.style.overflow;
+  document.documentElement.style.overflow = 'hidden';
+
+  const previouslyFocused = document.activeElement;
+
+  requestAnimationFrame(() => {
+    backdrop.classList.add('is-open');
+    const focusTarget = initialFocus
+      ? backdrop.querySelector(initialFocus)
+      : backdrop.querySelector('[data-modal-confirm]');
+    if (focusTarget && typeof focusTarget.focus === 'function') focusTarget.focus();
+  });
+
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    backdrop.classList.remove('is-open');
+    document.removeEventListener('keydown', onKey);
+    setTimeout(() => {
+      backdrop.remove();
+      document.documentElement.style.overflow = prevOverflow;
+      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+        try { previouslyFocused.focus(); } catch (_) {}
+      }
+      if (activeModalCleanup === close) activeModalCleanup = null;
+    }, 200);
+  };
+  activeModalCleanup = close;
+
+  const doCancel = () => {
+    if (onCancel) onCancel(backdrop);
+    close();
+  };
+
+  const doConfirm = async () => {
+    if (onConfirm) {
+      try {
+        const result = await onConfirm(backdrop);
+        if (result === false) return;
+      } catch (e) {
+        console.error('[portal] modal onConfirm error:', e);
+        return;
+      }
+    }
+    close();
+  };
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      doCancel();
+    } else if (
+      e.key === 'Enter' &&
+      !e.shiftKey &&
+      !(e.target instanceof HTMLTextAreaElement) &&
+      !(e.target instanceof HTMLButtonElement) &&
+      !(e.target instanceof HTMLSelectElement)
+    ) {
+      e.preventDefault();
+      doConfirm();
+    }
+  };
+
+  backdrop.addEventListener('click', (e) => {
+    if (e.target === backdrop) doCancel();
+  });
+  backdrop.querySelector('[data-modal-close]').addEventListener('click', doCancel);
+  backdrop.querySelector('[data-modal-cancel]').addEventListener('click', doCancel);
+  backdrop.querySelector('[data-modal-confirm]').addEventListener('click', doConfirm);
+  document.addEventListener('keydown', onKey);
+
+  return { root: backdrop, close };
+}
+
+function setModalError(root, message) {
+  const el = root.querySelector('[data-modal-error]');
+  if (!el) return;
+  if (message) {
+    el.textContent = message;
+    el.hidden = false;
+  } else {
+    el.textContent = '';
+    el.hidden = true;
+  }
+}
+
+function setModalBusy(root, busy, busyLabel) {
+  const btn = root.querySelector('[data-modal-confirm]');
+  const cancel = root.querySelector('[data-modal-cancel]');
+  if (!btn) return;
+  if (busy) {
+    btn.dataset.prevLabel = btn.textContent;
+    btn.setAttribute('disabled', 'true');
+    if (cancel) cancel.setAttribute('disabled', 'true');
+    if (busyLabel) btn.textContent = busyLabel;
+  } else {
+    btn.removeAttribute('disabled');
+    if (cancel) cancel.removeAttribute('disabled');
+    if (btn.dataset.prevLabel) {
+      btn.textContent = btn.dataset.prevLabel;
+      delete btn.dataset.prevLabel;
+    }
+  }
+}
+
+function showSignOutModal() {
+  openModal({
+    eyebrow: 'Confirm',
+    title: 'Sign out of your <em>workspace</em>?',
+    bodyHtml:
+      '<p class="modal-prose">You\u2019ll need to sign back in to pick up where you left off. ' +
+      'Active work on the server is safe \u2014 we just close this session on your device.</p>',
+    confirmLabel: 'Sign Out',
+    cancelLabel: 'Stay',
+    confirmVariant: 'danger',
+    onConfirm: async (root) => {
+      setModalBusy(root, true, 'Signing out\u2026');
+      await signOut();
+    },
+  });
+}
+
+function showNewRequestModal(user) {
+  openModal({
+    eyebrow: 'New Request',
+    title: 'Start a new <em>project</em>.',
+    bodyHtml:
+      '<div class="modal-field">' +
+        '<label class="form-label" for="modal-project-name">Project Name</label>' +
+        '<input class="input" id="modal-project-name" type="text" placeholder="e.g. Invoice Reconciliation Bot" autocomplete="off" maxlength="120" />' +
+      '</div>' +
+      '<div class="modal-field">' +
+        '<label class="form-label" for="modal-project-desc">What are you trying to solve?</label>' +
+        '<textarea class="textarea" id="modal-project-desc" rows="4" placeholder="A short paragraph is plenty \u2014 we\u2019ll follow up with questions." maxlength="800"></textarea>' +
+      '</div>' +
+      '<div class="modal-field">' +
+        '<label class="form-label" for="modal-project-priority">Priority</label>' +
+        '<select class="select" id="modal-project-priority">' +
+          '<option value="discovery">Discovery \u2014 still scoping</option>' +
+          '<option value="in_progress">Standard \u2014 start when ready</option>' +
+          '<option value="needs_review">Urgent \u2014 blocking us today</option>' +
+        '</select>' +
+      '</div>' +
+      '<div class="modal-error" data-modal-error hidden></div>',
+    confirmLabel: 'Submit Request',
+    cancelLabel: 'Cancel',
+    initialFocus: '#modal-project-name',
+    onConfirm: async (root) => {
+      const nameEl = root.querySelector('#modal-project-name');
+      const descEl = root.querySelector('#modal-project-desc');
+      const priorityEl = root.querySelector('#modal-project-priority');
+      const name = (nameEl.value || '').trim();
+      if (!name) {
+        setModalError(root, 'Please give this project a name.');
+        nameEl.focus();
+        return false;
+      }
+      setModalError(root, '');
+      setModalBusy(root, true, 'Submitting\u2026');
+      const res = await data.createProject(user.id, {
+        name,
+        description: (descEl.value || '').trim() || null,
+        status: priorityEl.value || 'discovery',
+      });
+      if (!res.ok) {
+        setModalBusy(root, false);
+        setModalError(root,
+          'Could not create project: ' + (res.error || 'Unknown error') +
+          '. Make sure the `projects` table exists and RLS allows inserts.');
+        return false;
+      }
+      location.reload();
+      return true;
+    },
+  });
+}
+
 // --- Shell ---
 function injectSprite() {
   if (document.getElementById('clearbot-logo')) return;
@@ -94,9 +310,9 @@ function populateIdentity(user) {
 
 function wireSignOut() {
   $$('[data-signout]').forEach(el => {
-    el.addEventListener('click', async (e) => {
+    el.addEventListener('click', (e) => {
       e.preventDefault();
-      await signOut();
+      showSignOutModal();
     });
   });
 }
@@ -104,23 +320,16 @@ function wireSignOut() {
 function wireUserMenu() {
   const btn = $('[data-user]');
   if (!btn) return;
-  btn.addEventListener('click', async () => {
-    if (confirm('Sign out of your workspace?')) await signOut();
+  btn.addEventListener('click', () => {
+    showSignOutModal();
   });
 }
 
 function wireActionButtons(user) {
   $$('[data-action="new-project"]').forEach(el => {
-    el.addEventListener('click', async (e) => {
+    el.addEventListener('click', (e) => {
       e.preventDefault();
-      const name = prompt('What should we call this project?');
-      if (!name || !name.trim()) return;
-      const res = await data.createProject(user.id, { name: name.trim() });
-      if (!res.ok) {
-        alert('Could not create project.\n\n' + (res.error || 'Unknown error') + '\n\nMake sure the `projects` table exists and RLS allows inserts for the signed-in user.');
-        return;
-      }
-      location.reload();
+      showNewRequestModal(user);
     });
   });
 }
