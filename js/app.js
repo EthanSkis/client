@@ -360,6 +360,38 @@ function wireActionButtons(user) {
   });
 }
 
+const SERVICES_HIDDEN_KEY = 'portal:services-panel-hidden';
+
+function wireServicesPanel() {
+  const panel = $('[data-services-panel]');
+  const restore = $('[data-services-restore]');
+  if (!panel || !restore) return;
+
+  let hidden = false;
+  try { hidden = localStorage.getItem(SERVICES_HIDDEN_KEY) === '1'; } catch (_) {}
+  setServicesVisible(panel, restore, !hidden);
+
+  const closeBtn = panel.querySelector('[data-services-close]');
+  const showBtn = restore.querySelector('[data-services-show]');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      setServicesVisible(panel, restore, false);
+      try { localStorage.setItem(SERVICES_HIDDEN_KEY, '1'); } catch (_) {}
+    });
+  }
+  if (showBtn) {
+    showBtn.addEventListener('click', () => {
+      setServicesVisible(panel, restore, true);
+      try { localStorage.removeItem(SERVICES_HIDDEN_KEY); } catch (_) {}
+    });
+  }
+}
+
+function setServicesVisible(panel, restore, visible) {
+  panel.hidden = !visible;
+  restore.hidden = visible;
+}
+
 function revealApp() {
   document.documentElement.setAttribute('data-auth', 'signed-in');
 }
@@ -674,6 +706,7 @@ async function bootstrap() {
   wireSignOut();
   wireUserMenu();
   wireActionButtons(user);
+  wireServicesPanel();
   revealApp();
 
   const page = document.body.dataset.page;
