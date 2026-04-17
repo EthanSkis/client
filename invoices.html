@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Invoices · ClearBot Client Portal</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="app">
+
+  <header class="topbar" role="banner">
+    <a class="brand" href="index.html" aria-label="ClearBot Client Portal home">
+      <svg class="mark-logo" width="20" height="20" aria-hidden="true"><use href="#clearbot-logo"/></svg>
+      <span class="brand-name">ClearBot<em>/portal</em></span>
+    </a>
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <span>Portal</span><span class="sep">/</span><span class="here">Invoices</span>
+    </nav>
+    <button class="user" data-user aria-label="Account menu">
+      <span class="name">Acme Co.</span>
+      <span class="avatar" aria-hidden="true">A</span>
+    </button>
+  </header>
+
+  <aside class="sidebar" aria-label="Portal navigation">
+    <a class="nav-item" data-nav="index.html" href="index.html">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" data-nav="projects.html" href="projects.html">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
+      Projects
+    </a>
+    <a class="nav-item" data-nav="deliverables.html" href="deliverables.html">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h11l5 5v11H4z"/><path d="M15 4v5h5"/></svg>
+      Deliverables
+    </a>
+    <a class="nav-item" data-nav="messages.html" href="messages.html">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v12H8l-4 3z"/></svg>
+      Messages
+    </a>
+    <a class="nav-item" data-nav="invoices.html" href="invoices.html">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+      Invoices
+    </a>
+    <div class="sidebar-group">Account</div>
+    <a class="nav-item" data-nav="settings.html" href="settings.html">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Settings
+    </a>
+    <a class="nav-item" href="https://login.clearbot.io">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      Sign Out
+    </a>
+    <div class="spacer"></div>
+    <div class="foot"><a href="https://clearbot.io">← Main Site</a></div>
+  </aside>
+
+  <main class="main">
+
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Invoices · Billing</div>
+        <h1>Clean books, <em>quietly kept</em>.</h1>
+      </div>
+      <div class="actions">
+        <a href="#" class="btn">Payment Method</a>
+        <a href="#" class="btn btn-primary">Pay Next Due</a>
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile">
+        <div class="label">Outstanding</div>
+        <div class="val">$4,820<small>.00</small></div>
+        <div class="delta">1 open invoice</div>
+      </div>
+      <div class="tile">
+        <div class="label">Paid YTD</div>
+        <div class="val">$28,400<small>.00</small></div>
+        <div class="delta">4 invoices settled</div>
+      </div>
+      <div class="tile">
+        <div class="label">Next Due</div>
+        <div class="val">Apr 28</div>
+        <div class="delta">11 days away</div>
+      </div>
+      <div class="tile">
+        <div class="label">Payment Method</div>
+        <div class="val" style="font-size:24px; letter-spacing:0.04em;">ACH · •••• 4418</div>
+        <div class="delta">Primary · Auto-pay on</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Invoice</th>
+            <th>Project</th>
+            <th>Amount</th>
+            <th>Issued</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="proj-name">INV-00217</div>
+              <div class="sub">Due Apr 28</div>
+            </td>
+            <td class="mono">Inventory Automation</td>
+            <td class="num">$4,820.00</td>
+            <td class="mono">Apr 14</td>
+            <td><span class="badge warn"><span class="dot"></span>Due</span></td>
+            <td><a class="btn btn-sm" href="#">Open</a></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="proj-name">INV-00213</div>
+              <div class="sub">Paid Apr 16</div>
+            </td>
+            <td class="mono">Inventory Automation</td>
+            <td class="num">$2,400.00</td>
+            <td class="mono">Apr 1</td>
+            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
+            <td><a class="btn btn-sm" href="#">PDF</a></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="proj-name">INV-00205</div>
+              <div class="sub">Paid Mar 30</div>
+            </td>
+            <td class="mono">Ops Dashboard</td>
+            <td class="num">$6,400.00</td>
+            <td class="mono">Mar 15</td>
+            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
+            <td><a class="btn btn-sm" href="#">PDF</a></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="proj-name">INV-00198</div>
+              <div class="sub">Paid Feb 28</div>
+            </td>
+            <td class="mono">Onboarding Pipeline</td>
+            <td class="num">$12,800.00</td>
+            <td class="mono">Feb 15</td>
+            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
+            <td><a class="btn btn-sm" href="#">PDF</a></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="proj-name">INV-00184</div>
+              <div class="sub">Paid Jan 30</div>
+            </td>
+            <td class="mono">Onboarding Pipeline</td>
+            <td class="num">$6,800.00</td>
+            <td class="mono">Jan 15</td>
+            <td><span class="badge ok"><span class="dot"></span>Paid</span></td>
+            <td><a class="btn btn-sm" href="#">PDF</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+</div>
+
+<script src="js/app.js" defer></script>
+</body>
+</html>
