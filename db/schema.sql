@@ -234,3 +234,37 @@ create policy "invoices_self"     on public.invoices        for all using (auth.
 create policy "threads_self"      on public.message_threads for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "messages_self"     on public.messages        for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "activity_self"     on public.activity        for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ================================
+-- Team / admin access
+-- ================================
+-- Users whose `profiles.role` is 'admin' or 'team' can read and write
+-- any row (via the team.clearbot.io dashboard). `is_team_member()` is
+-- `security definer` so the underlying profile lookup bypasses the
+-- self-only RLS above when checking the caller's role.
+create or replace function public.is_team_member()
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.profiles
+    where user_id = auth.uid() and role in ('admin', 'team')
+  );
+$$;
+
+drop policy if exists "profiles_team_all"     on public.profiles;
+drop policy if exists "projects_team_all"     on public.projects;
+drop policy if exists "deliverables_team_all" on public.deliverables;
+drop policy if exists "invoices_team_all"     on public.invoices;
+drop policy if exists "threads_team_all"      on public.message_threads;
+drop policy if exists "messages_team_all"     on public.messages;
+drop policy if exists "activity_team_all"     on public.activity;
+
+create policy "profiles_team_all"     on public.profiles        for all using (public.is_team_member()) with check (public.is_team_member());
+create policy "projects_team_all"     on public.projects        for all using (public.is_team_member()) with check (public.is_team_member());
+create policy "deliverables_team_all" on public.deliverables    for all using (public.is_team_member()) with check (public.is_team_member());
+create policy "invoices_team_all"     on public.invoices        for all using (public.is_team_member()) with check (public.is_team_member());
+create policy "threads_team_all"      on public.message_threads for all using (public.is_team_member()) with check (public.is_team_member());
+create policy "messages_team_all"     on public.messages        for all using (public.is_team_member()) with check (public.is_team_member());
+create policy "activity_team_all"     on public.activity        for all using (public.is_team_member()) with check (public.is_team_member());
+
+-- Seed: flag the initial team operator. Edit/add as needed.
+update public.profiles set role = 'admin' where email = 'ethan@clearbot.io' and coalesce(role, '') <> 'admin';
