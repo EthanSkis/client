@@ -154,6 +154,10 @@ function openModal(opts) {
   };
   activeModalCleanup = close;
 
+  // The X button, Escape key, and backdrop click are pure dismiss actions:
+  // they only close the modal. The labeled Cancel footer button still runs
+  // onCancel (used by viewer modals like project detail to expose a side
+  // action like "Message us").
   const doCancel = () => {
     if (onCancel) onCancel(backdrop);
     close();
@@ -175,7 +179,7 @@ function openModal(opts) {
   const onKey = (e) => {
     if (e.key === 'Escape') {
       e.preventDefault();
-      doCancel();
+      close();
     } else if (
       e.key === 'Enter' &&
       !e.shiftKey &&
@@ -189,9 +193,9 @@ function openModal(opts) {
   };
 
   backdrop.addEventListener('click', (e) => {
-    if (e.target === backdrop) doCancel();
+    if (e.target === backdrop) close();
   });
-  backdrop.querySelector('[data-modal-close]').addEventListener('click', doCancel);
+  backdrop.querySelector('[data-modal-close]').addEventListener('click', close);
   backdrop.querySelector('[data-modal-cancel]').addEventListener('click', doCancel);
   backdrop.querySelector('[data-modal-confirm]').addEventListener('click', doConfirm);
   document.addEventListener('keydown', onKey);
