@@ -635,7 +635,6 @@ async function renderSettings(user) {
     'settings-first':      profile.first_name     || nameParts[0] || '',
     'settings-last':       profile.last_name      || nameParts.slice(1).join(' ') || '',
     'settings-email':      profile.email          || user.email || '',
-    'settings-role':       profile.role           || meta.role || '',
   };
   for (const [id, val] of Object.entries(fields)) {
     const el = document.getElementById(id);
@@ -659,6 +658,8 @@ async function renderSettings(user) {
     saveBtn.addEventListener('click', async () => {
       saveBtn.setAttribute('disabled', 'true');
       if (saveMsg) saveMsg.textContent = 'Saving…';
+      // role is intentionally omitted: it's a system-level field managed by
+      // team admins via team.clearbot.io, and enforced by a DB trigger.
       const patch = {
         company_name:   document.getElementById('settings-org-name')?.value || null,
         primary_domain: document.getElementById('settings-org-domain')?.value || null,
@@ -666,7 +667,6 @@ async function renderSettings(user) {
         first_name:     document.getElementById('settings-first')?.value || null,
         last_name:      document.getElementById('settings-last')?.value || null,
         email:          document.getElementById('settings-email')?.value || null,
-        role:           document.getElementById('settings-role')?.value || null,
         notif_deliverables: !!document.getElementById('settings-notif-deliverables')?.checked,
         notif_messages:     !!document.getElementById('settings-notif-messages')?.checked,
         notif_digest:       !!document.getElementById('settings-notif-digest')?.checked,
