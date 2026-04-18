@@ -156,3 +156,86 @@ export function getProjectActivity(projectId, limit = 20) {
       .limit(limit)
   );
 }
+
+// ============================================================================
+// Messages (thread bodies)
+// ============================================================================
+
+export function getThreadMessages(threadId, limit = 200) {
+  return safeList(() =>
+    supabase
+      .from('messages')
+      .select('id, thread_id, sender_id, sender_role, body, created_at')
+      .eq('thread_id', threadId)
+      .order('created_at', { ascending: true })
+      .limit(limit)
+  );
+}
+
+export async function sendMessage({ threadId, userId, senderId, senderRole, body }) {
+  const text = (body || '').trim();
+  if (!text) return { ok: false, error: 'Empty message' };
+  try {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        thread_id: threadId,
+        user_id: userId,
+        sender_id: senderId || null,
+        sender_role: senderRole || 'client',
+        body: text,
+      })
+      .select('id, thread_id, sender_id, sender_role, body, created_at')
+      .single();
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, message: data };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || 'Unknown error' };
+  }
+}
+
+export async function createThread(userId, { title, projectId, projectName, firstMessage, senderId }) {
+  const trimmedTitle = (title || '').trim() || 'New thread';
+  try {
+    const { data: thread, error } = await supabase
+      .from('message_threads')
+      .insert({
+        user_id: userId,
+        project_id: projectId || null,
+        project_name: projectName || null,
+        title: trimmedTitle,
+        status: 'active',
+      })
+      .select('id, title, preview, project_name, unread_count, status, updated_at')
+      .single();
+    if (error) return { ok: false, error: error.message };
+
+    const body = (firstMessage || '').trim();
+    if (body) {
+      const res = await sendMessage({
+        threadId: thread.id,
+        userId,
+        senderId: senderId || userId,
+        senderRole: 'client',
+        body,
+      });
+      if (!res.ok) return { ok: false, error: res.error, thread };
+    }
+    return { ok: true, thread };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || 'Unknown error' };
+  }
+}
+
+export async function markThreadRead(threadId) {
+  try {
+    const { error } = await supabase
+      .from('message_threads')
+      .update({ unread_count: 0 })
+      .eq('id', threadId);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e && e.message) || 'Unknown error' };
+  }
+}

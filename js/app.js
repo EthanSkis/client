@@ -714,38 +714,231 @@ async function renderDeliverables(user) {
   ).join('');
 }
 
+function renderMessageBubble(m, meId) {
+  const mine = m.sender_role === 'client' || m.sender_id === meId;
+  const author = m.sender_role === 'team' ? 'ClearBot' : 'You';
+  return '<div class="msg-bubble' + (mine ? ' mine' : '') + '">' +
+    '<div class="author"><span>' + escapeHtml(author) + '</span><span class="mono">' + fmtRelTime(m.created_at) + '</span></div>' +
+    escapeHtml(m.body || '').replace(/\n/g, '<br/>') +
+  '</div>';
+}
+
 async function renderMessages(user) {
-  const threads = await data.getThreads(user.id);
   const list = $('[data-threads]');
   const pane = $('[data-thread-pane]');
   if (!list || !pane) return;
-  if (!threads.length) {
-    list.innerHTML = '<div style="padding:24px 16px;">' + emptyState('No threads', 'Your conversations with the ClearBot team will appear here.') + '</div>';
-    pane.innerHTML = '<div class="msg-pane-body" style="align-items:center;justify-content:center;">' + emptyState('Nothing to show', 'Start a thread or wait for updates on an active project.') + '</div>';
-    return;
-  }
-  list.innerHTML = threads.map((t, i) =>
-    '<a class="msg-thread' + (i === 0 ? ' active' : '') + '" href="#">' +
-      '<div class="title">' + escapeHtml(t.title || 'Thread') + ((t.unread_count || 0) > 0 ? ' <span class="unread-dot" aria-hidden="true"></span>' : '') + '</div>' +
-      '<div class="preview">' + escapeHtml(t.preview || '') + '</div>' +
-      '<div class="meta">' + escapeHtml(t.project_name || 'General') + ' · ' + fmtRelTime(t.updated_at) + '</div>' +
-    '</a>'
-  ).join('');
 
-  const active = threads[0];
-  pane.innerHTML =
-    '<div class="msg-pane-head">' +
-      '<div>' +
-        '<div class="title">' + escapeHtml(active.title || 'Thread') + '</div>' +
-        '<div class="sub">' + escapeHtml(active.project_name || 'General') + '</div>' +
-      '</div>' +
-      statusBadge(active.status || 'active') +
-    '</div>' +
-    '<div class="msg-pane-body">' + emptyState('Message history coming soon', 'Threaded conversation rendering lands in the next update.') + '</div>' +
-    '<div class="msg-composer">' +
-      '<textarea class="textarea" placeholder="Type a reply…" rows="2"></textarea>' +
-      '<button class="btn btn-primary" type="button">Send</button>' +
+  const state = { threads: [], activeId: null };
+
+  const hashId = () => {
+    const h = (location.hash || '').replace(/^#/, '').trim();
+    return h || null;
+  };
+
+  async function loadThreads() {
+    state.threads = await data.getThreads(user.id);
+  }
+
+  function renderList() {
+    if (!state.threads.length) {
+      list.innerHTML = '<div style="padding:24px 16px;">' + emptyState('No threads', 'Your conversations with the ClearBot team will appear here.') + '</div>';
+      return;
+    }
+    list.innerHTML = state.threads.map(t =>
+      '<a class="msg-thread' + (t.id === state.activeId ? ' active' : '') + '" href="#' + escapeHtml(t.id) + '" data-thread-id="' + escapeHtml(t.id) + '">' +
+        '<div class="title">' + escapeHtml(t.title || 'Thread') + ((t.unread_count || 0) > 0 ? ' <span class="unread-dot" aria-hidden="true"></span>' : '') + '</div>' +
+        '<div class="preview">' + escapeHtml(t.preview || '') + '</div>' +
+        '<div class="meta">' + escapeHtml(t.project_name || 'General') + ' · ' + fmtRelTime(t.updated_at) + '</div>' +
+      '</a>'
+    ).join('');
+    list.querySelectorAll('[data-thread-id]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        selectThread(el.getAttribute('data-thread-id'));
+      });
+    });
+  }
+
+  function renderEmptyPane() {
+    pane.innerHTML = '<div class="msg-pane-body" style="align-items:center;justify-content:center;">' +
+      emptyState('Nothing selected', 'Pick a thread on the left, or start a new one with "+ New Thread".') +
     '</div>';
+  }
+
+  async function renderPane(threadId) {
+    const thread = state.threads.find(t => t.id === threadId);
+    if (!thread) { renderEmptyPane(); return; }
+
+    pane.innerHTML =
+      '<div class="msg-pane-head">' +
+        '<div>' +
+          '<div class="title">' + escapeHtml(thread.title || 'Thread') + '</div>' +
+          '<div class="sub">' + escapeHtml(thread.project_name || 'General') + '</div>' +
+        '</div>' +
+        statusBadge(thread.status || 'active') +
+      '</div>' +
+      '<div class="msg-pane-body" data-msg-body><div class="empty" style="padding:24px;">Loading…</div></div>' +
+      '<form class="msg-composer" data-composer>' +
+        '<textarea class="textarea" data-composer-input placeholder="Type a reply…" rows="2" maxlength="4000"></textarea>' +
+        '<button class="btn btn-primary" type="submit" data-composer-send>Send</button>' +
+      '</form>';
+
+    const body = pane.querySelector('[data-msg-body]');
+    const messages = await data.getThreadMessages(threadId);
+    if (!messages.length) {
+      body.innerHTML = '<div class="empty" style="padding:24px;">No messages yet. Say hello below.</div>';
+    } else {
+      body.innerHTML = messages.map(m => renderMessageBubble(m, user.id)).join('');
+      body.scrollTop = body.scrollHeight;
+    }
+
+    // Clear unread flag once the thread is viewed (best-effort; RLS scoped to user).
+    if ((thread.unread_count || 0) > 0) {
+      data.markThreadRead(threadId).then((res) => {
+        if (res.ok) {
+          thread.unread_count = 0;
+          renderList();
+        }
+      });
+    }
+
+    const form = pane.querySelector('[data-composer]');
+    const input = pane.querySelector('[data-composer-input]');
+    const btn = pane.querySelector('[data-composer-send]');
+    if (form && input && btn) {
+      input.focus();
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      });
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const text = (input.value || '').trim();
+        if (!text) return;
+        btn.setAttribute('disabled', 'true');
+        const prevLabel = btn.textContent;
+        btn.textContent = 'Sending…';
+        const res = await data.sendMessage({
+          threadId,
+          userId: user.id,
+          senderId: user.id,
+          senderRole: 'client',
+          body: text,
+        });
+        btn.removeAttribute('disabled');
+        btn.textContent = prevLabel;
+        if (!res.ok) {
+          console.error('[portal] sendMessage failed:', res.error);
+          return;
+        }
+        input.value = '';
+        if (body) {
+          body.insertAdjacentHTML('beforeend', renderMessageBubble(res.message, user.id));
+          body.scrollTop = body.scrollHeight;
+        }
+        // Refresh thread metadata so preview / ordering update.
+        await loadThreads();
+        renderList();
+      });
+    }
+  }
+
+  function selectThread(id) {
+    state.activeId = id;
+    if (id && location.hash !== '#' + id) {
+      try { history.replaceState(null, '', '#' + id); } catch (_) {}
+    }
+    renderList();
+    if (id) renderPane(id);
+    else renderEmptyPane();
+  }
+
+  await loadThreads();
+
+  const preferred = hashId() && state.threads.find(t => t.id === hashId())
+    ? hashId()
+    : (state.threads[0] ? state.threads[0].id : null);
+
+  if (!state.threads.length) {
+    renderList();
+    renderEmptyPane();
+  } else {
+    selectThread(preferred);
+  }
+
+  wireNewThreadButton(user, async (newId) => {
+    await loadThreads();
+    selectThread(newId || (state.threads[0] && state.threads[0].id));
+  });
+}
+
+async function wireNewThreadButton(user, onCreated) {
+  const btn = $('[data-new-thread]');
+  if (!btn || btn.dataset.bound === '1') return;
+  btn.dataset.bound = '1';
+
+  // Preload projects so the picker can show names; empty array is fine.
+  const projects = await data.getProjects(user.id);
+
+  btn.addEventListener('click', () => {
+    const projectOptionsHtml = ['<option value="">— No project —</option>']
+      .concat(projects.map(p =>
+        '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name || 'Untitled') + '</option>'
+      )).join('');
+
+    openModal({
+      eyebrow: 'New Thread',
+      title: 'Start a <em>conversation</em>.',
+      bodyHtml:
+        '<div class="modal-field">' +
+          '<label class="form-label" for="modal-thread-title">Subject</label>' +
+          '<input class="input" id="modal-thread-title" type="text" placeholder="What\u2019s this about?" autocomplete="off" maxlength="120" />' +
+        '</div>' +
+        '<div class="modal-field">' +
+          '<label class="form-label" for="modal-thread-project">Project</label>' +
+          '<select class="select" id="modal-thread-project">' + projectOptionsHtml + '</select>' +
+        '</div>' +
+        '<div class="modal-field">' +
+          '<label class="form-label" for="modal-thread-body">Message</label>' +
+          '<textarea class="textarea" id="modal-thread-body" rows="4" placeholder="Give us the context you have." maxlength="4000"></textarea>' +
+        '</div>' +
+        '<div class="modal-error" data-modal-error hidden></div>',
+      confirmLabel: 'Send',
+      cancelLabel: 'Cancel',
+      initialFocus: '#modal-thread-title',
+      onConfirm: async (root) => {
+        const titleEl = root.querySelector('#modal-thread-title');
+        const projEl  = root.querySelector('#modal-thread-project');
+        const bodyEl  = root.querySelector('#modal-thread-body');
+        const title = (titleEl.value || '').trim();
+        const body  = (bodyEl.value || '').trim();
+        if (!title) { setModalError(root, 'Give your thread a subject.'); titleEl.focus(); return false; }
+        if (!body)  { setModalError(root, 'Type a first message.'); bodyEl.focus(); return false; }
+        const projectId = projEl.value || null;
+        const projectName = projectId
+          ? ((projects.find(p => p.id === projectId) || {}).name || null)
+          : null;
+        setModalError(root, '');
+        setModalBusy(root, true, 'Sending\u2026');
+        const res = await data.createThread(user.id, {
+          title,
+          projectId,
+          projectName,
+          firstMessage: body,
+          senderId: user.id,
+        });
+        if (!res.ok) {
+          setModalBusy(root, false);
+          setModalError(root, 'Could not create thread: ' + (res.error || 'Unknown error'));
+          return false;
+        }
+        if (onCreated) await onCreated(res.thread && res.thread.id);
+        return true;
+      },
+    });
+  });
 }
 
 async function renderInvoices(user) {
