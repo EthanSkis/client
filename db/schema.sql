@@ -268,3 +268,20 @@ create policy "activity_team_all"     on public.activity        for all using (p
 
 -- Seed: flag the initial team operator. Edit/add as needed.
 update public.profiles set role = 'admin' where email = 'ethan@clearbot.io' and coalesce(role, '') <> 'admin';
+
+-- ================================
+-- Realtime publication
+-- ================================
+-- Messages and thread metadata are streamed to the browser so the UI can
+-- update live without a reload. RLS still gates what each subscriber sees.
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.messages;
+  exception when duplicate_object then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.message_threads;
+  exception when duplicate_object then null;
+  end;
+end $$;
