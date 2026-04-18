@@ -35,7 +35,7 @@ export function getProjects(userId) {
   return safeList(() =>
     supabase
       .from('projects')
-      .select('id, name, description, status, progress, next_milestone, updated_at')
+      .select('id, name, description, status, progress, next_milestone, created_at, updated_at')
       .eq('user_id', userId)
       .order('updated_at', { ascending: false })
   );
@@ -123,4 +123,36 @@ export async function createProject(userId, fields) {
   } catch (e) {
     return { ok: false, error: (e && e.message) || 'Unknown error' };
   }
+}
+
+// Project-scoped fetchers used by the project detail modal.
+export function getProjectDeliverables(projectId) {
+  return safeList(() =>
+    supabase
+      .from('deliverables')
+      .select('id, name, file_type, size_label, status, version, url, updated_at')
+      .eq('project_id', projectId)
+      .order('updated_at', { ascending: false })
+  );
+}
+
+export function getProjectInvoices(projectId) {
+  return safeList(() =>
+    supabase
+      .from('invoices')
+      .select('id, number, amount_cents, status, issued_at, due_at, paid_at, pdf_url')
+      .eq('project_id', projectId)
+      .order('issued_at', { ascending: false })
+  );
+}
+
+export function getProjectActivity(projectId, limit = 20) {
+  return safeList(() =>
+    supabase
+      .from('activity')
+      .select('id, text, unread, created_at')
+      .eq('project_id', projectId)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
 }
