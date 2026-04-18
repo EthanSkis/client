@@ -1,6 +1,7 @@
 import { supabase, LOGIN_URL } from './supabase.js';
 
 const REDIRECT_KEY = 'portal_redirect';
+const TEAM_URL = 'https://team.clearbot.io';
 
 export async function requireSession() {
   const { data, error } = await supabase.auth.getSession();
@@ -14,6 +15,19 @@ export async function requireSession() {
     location.replace(LOGIN_URL);
     return null;
   }
+  // Team members belong on team.clearbot.io, not the client portal.
+  try {
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', data.session.user.id)
+      .maybeSingle();
+    const role = ((prof && prof.role) || '').toLowerCase();
+    if (role === 'admin' || role === 'team') {
+      location.replace(TEAM_URL);
+      return null;
+    }
+  } catch (_) { /* fail open: stay on client portal */ }
   return data.session;
 }
 
