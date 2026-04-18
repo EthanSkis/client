@@ -112,6 +112,16 @@ function openModal(opts) {
       modalEl.style.maxWidth = '760px';
       modalEl.style.maxHeight = 'calc(100vh - 48px)';
       modalEl.style.overflowY = 'auto';
+      // Hide the scrollbar visually — wheel/touch scroll still works.
+      modalEl.style.scrollbarWidth = 'none';
+      modalEl.style.msOverflowStyle = 'none';
+      modalEl.classList.add('modal-noscrollbar');
+    }
+    if (!document.getElementById('modal-noscrollbar-style')) {
+      const s = document.createElement('style');
+      s.id = 'modal-noscrollbar-style';
+      s.textContent = '.modal-noscrollbar::-webkit-scrollbar{display:none;width:0;height:0;}';
+      document.head.appendChild(s);
     }
   }
   const prevOverflow = document.documentElement.style.overflow;
