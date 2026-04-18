@@ -136,6 +136,40 @@ create trigger tg_on_auth_user_created
   for each row execute function public.tg_handle_new_user();
 
 -- ================================
+-- Role guard: prevent non-admin/team users from self-promoting
+-- ================================
+-- Even though the client portal's settings UI no longer exposes the role
+-- field, RLS alone (auth.uid() = user_id) would still allow a user to
+-- update their own row with role='admin' via a direct API call. This
+-- trigger reverts any attempt to change the role unless the caller is
+-- already a team member, or the update is coming from service_role
+-- (SQL editor / server-side admin tools).
+create or replace function public.tg_guard_profile_role()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  caller_role text;
+begin
+  -- Allow service_role / SQL editor updates to bypass the guard.
+  if auth.uid() is null or auth.role() = 'service_role' then
+    return new;
+  end if;
+  if new.role is distinct from old.role then
+    select p.role into caller_role
+    from public.profiles p
+    where p.user_id = auth.uid();
+    if coalesce(caller_role, '') not in ('admin', 'team') then
+      new.role := old.role;
+    end if;
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists tg_profiles_guard_role on public.profiles;
+create trigger tg_profiles_guard_role
+  before update on public.profiles
+  for each row execute function public.tg_guard_profile_role();
+
+-- ================================
 -- Row-Level Security
 -- ================================
 alter table public.profiles        enable row level security;
