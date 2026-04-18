@@ -642,76 +642,133 @@ async function renderDashboard(user) {
   }
 }
 
+function matchAll(haystack, needle) {
+  if (!needle) return true;
+  const parts = needle.split(/\s+/).filter(Boolean);
+  const hay = haystack.toLowerCase();
+  return parts.every(p => hay.indexOf(p) !== -1);
+}
+
+function wireSearchInput(inputEl, rerender) {
+  if (!inputEl || inputEl.dataset.bound === '1') return;
+  inputEl.dataset.bound = '1';
+  let t = null;
+  inputEl.addEventListener('input', () => {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => rerender((inputEl.value || '').trim().toLowerCase()), 120);
+  });
+}
+
 async function renderProjects(user) {
   const projects = await data.getProjects(user.id);
   const tbody = $('[data-projects-table]');
   const wrap = $('[data-projects-wrap]');
   const emptyRoot = $('[data-projects-empty]');
+  const searchEl = $('#projects-search');
+  const countEl = $('[data-projects-count]');
   if (!tbody) return;
-  if (!projects.length) {
-    if (wrap) wrap.hidden = true;
-    if (emptyRoot) emptyRoot.innerHTML = emptyState('No projects yet', 'Click “+ New Request” to scope and start your first project with us.');
-    return;
-  }
-  if (wrap) wrap.hidden = false;
-  if (emptyRoot) emptyRoot.innerHTML = '';
-  tbody.innerHTML = projects.map(p =>
-    '<tr data-project-row="' + escapeHtml(p.id) + '" style="cursor:pointer;">' +
-      '<td>' +
-        '<div class="proj-name">' + escapeHtml(p.name || 'Untitled') + '</div>' +
-        (p.description ? '<div class="sub">' + escapeHtml(p.description) + '</div>' : '') +
-      '</td>' +
-      '<td>' + statusBadge(p.status) + '</td>' +
-      '<td style="min-width:160px;">' +
-        '<div style="display:flex;align-items:center;gap:10px;">' +
-          '<span class="progress"><span class="progress-bar" style="width:' + (p.progress || 0) + '%"></span></span>' +
-          '<span class="mono">' + (p.progress || 0) + '%</span>' +
-        '</div>' +
-      '</td>' +
-      '<td class="mono">' + escapeHtml(p.next_milestone || '—') + '</td>' +
-      '<td class="mono">' + (p.updated_at ? fmtRelTime(p.updated_at) : '—') + '</td>' +
-    '</tr>'
-  ).join('');
-  tbody.querySelectorAll('[data-project-row]').forEach(tr => {
-    tr.addEventListener('click', () => {
-      const id = tr.getAttribute('data-project-row');
-      const proj = projects.find(p => p.id === id);
-      if (proj) showProjectDetail(proj, user);
+
+  const draw = (q) => {
+    const filtered = !q ? projects : projects.filter(p => {
+      const hay = [p.name, p.description, p.status, p.next_milestone].filter(Boolean).join(' ');
+      return matchAll(hay, q);
     });
-  });
+    if (countEl) countEl.textContent = q
+      ? filtered.length + (filtered.length === 1 ? ' match' : ' matches')
+      : filtered.length + (filtered.length === 1 ? ' project' : ' projects');
+    if (!projects.length) {
+      if (wrap) wrap.hidden = true;
+      if (emptyRoot) emptyRoot.innerHTML = emptyState('No projects yet', 'Click “+ New Request” to scope and start your first project with us.');
+      return;
+    }
+    if (!filtered.length) {
+      if (wrap) wrap.hidden = true;
+      if (emptyRoot) emptyRoot.innerHTML = emptyState('No matches', 'Try a different search term or clear the search to see everything.');
+      return;
+    }
+    if (wrap) wrap.hidden = false;
+    if (emptyRoot) emptyRoot.innerHTML = '';
+    tbody.innerHTML = filtered.map(p =>
+      '<tr data-project-row="' + escapeHtml(p.id) + '" style="cursor:pointer;">' +
+        '<td>' +
+          '<div class="proj-name">' + escapeHtml(p.name || 'Untitled') + '</div>' +
+          (p.description ? '<div class="sub">' + escapeHtml(p.description) + '</div>' : '') +
+        '</td>' +
+        '<td>' + statusBadge(p.status) + '</td>' +
+        '<td style="min-width:160px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<span class="progress"><span class="progress-bar" style="width:' + (p.progress || 0) + '%"></span></span>' +
+            '<span class="mono">' + (p.progress || 0) + '%</span>' +
+          '</div>' +
+        '</td>' +
+        '<td class="mono">' + escapeHtml(p.next_milestone || '—') + '</td>' +
+        '<td class="mono">' + (p.updated_at ? fmtRelTime(p.updated_at) : '—') + '</td>' +
+      '</tr>'
+    ).join('');
+    tbody.querySelectorAll('[data-project-row]').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const id = tr.getAttribute('data-project-row');
+        const proj = projects.find(p => p.id === id);
+        if (proj) showProjectDetail(proj, user);
+      });
+    });
+  };
+
+  wireSearchInput(searchEl, draw);
+  draw((searchEl && searchEl.value || '').trim().toLowerCase());
 }
 
 async function renderDeliverables(user) {
   const items = await data.getDeliverables(user.id);
   const root = $('[data-deliverables]');
+  const searchEl = $('#deliverables-search');
+  const countEl = $('[data-deliverables-count]');
   if (!root) return;
-  if (!items.length) {
-    root.innerHTML = emptyState('No deliverables yet', 'Drafts, runbooks, and shipped files will appear here as your projects progress.');
-    return;
-  }
-  const groups = {};
-  for (const d of items) {
-    const key = d.project_name || 'Unassigned';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(d);
-  }
-  root.innerHTML = Object.entries(groups).map(([proj, files]) =>
-    '<section class="section">' +
-      '<div class="section-head"><h2>' + escapeHtml(proj) + '</h2><span class="sub">' + files.length + (files.length === 1 ? ' file' : ' files') + '</span></div>' +
-      '<div class="files">' + files.map(f =>
-        '<a class="file" href="' + (f.url ? escapeHtml(f.url) : '#') + '"' + (f.url ? ' target="_blank" rel="noopener"' : '') + '>' +
-          '<span class="file-ico">' + escapeHtml((f.file_type || 'FILE').toString().toUpperCase().slice(0, 4)) + '</span>' +
-          '<div>' +
-            '<div class="file-name">' + escapeHtml(f.name || 'Untitled') + '</div>' +
-            '<div class="file-meta">' + (f.size_label ? escapeHtml(f.size_label) + ' · ' : '') + 'Updated ' + fmtRelTime(f.updated_at) + '</div>' +
-          '</div>' +
-          statusBadge(f.status) +
-          '<span class="mono file-col-hide">' + escapeHtml(f.version || '') + '</span>' +
-          '<span class="btn btn-sm">Open</span>' +
-        '</a>'
-      ).join('') + '</div>' +
-    '</section>'
-  ).join('');
+
+  const draw = (q) => {
+    const filtered = !q ? items : items.filter(d => {
+      const hay = [d.name, d.project_name, d.status, d.version, d.file_type, d.size_label]
+        .filter(Boolean).join(' ');
+      return matchAll(hay, q);
+    });
+    if (countEl) countEl.textContent = q
+      ? filtered.length + (filtered.length === 1 ? ' match' : ' matches')
+      : filtered.length + (filtered.length === 1 ? ' file' : ' files');
+    if (!items.length) {
+      root.innerHTML = emptyState('No deliverables yet', 'Drafts, runbooks, and shipped files will appear here as your projects progress.');
+      return;
+    }
+    if (!filtered.length) {
+      root.innerHTML = emptyState('No matches', 'Try a different search term or clear the search to see everything.');
+      return;
+    }
+    const groups = {};
+    for (const d of filtered) {
+      const key = d.project_name || 'Unassigned';
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(d);
+    }
+    root.innerHTML = Object.entries(groups).map(([proj, files]) =>
+      '<section class="section">' +
+        '<div class="section-head"><h2>' + escapeHtml(proj) + '</h2><span class="sub">' + files.length + (files.length === 1 ? ' file' : ' files') + '</span></div>' +
+        '<div class="files">' + files.map(f =>
+          '<a class="file" href="' + (f.url ? escapeHtml(f.url) : '#') + '"' + (f.url ? ' target="_blank" rel="noopener"' : '') + '>' +
+            '<span class="file-ico">' + escapeHtml((f.file_type || 'FILE').toString().toUpperCase().slice(0, 4)) + '</span>' +
+            '<div>' +
+              '<div class="file-name">' + escapeHtml(f.name || 'Untitled') + '</div>' +
+              '<div class="file-meta">' + (f.size_label ? escapeHtml(f.size_label) + ' · ' : '') + 'Updated ' + fmtRelTime(f.updated_at) + '</div>' +
+            '</div>' +
+            statusBadge(f.status) +
+            '<span class="mono file-col-hide">' + escapeHtml(f.version || '') + '</span>' +
+            '<span class="btn btn-sm">Open</span>' +
+          '</a>'
+        ).join('') + '</div>' +
+      '</section>'
+    ).join('');
+  };
+
+  wireSearchInput(searchEl, draw);
+  draw((searchEl && searchEl.value || '').trim().toLowerCase());
 }
 
 function renderMessageBubble(m, meId) {
@@ -961,27 +1018,47 @@ async function renderInvoices(user) {
   const tbody = $('[data-invoices-table]');
   const wrap = $('[data-invoices-wrap]');
   const emptyRoot = $('[data-invoices-empty]');
+  const searchEl = $('#invoices-search');
+  const countEl = $('[data-invoices-count]');
   if (!tbody) return;
-  if (!invoices.length) {
-    if (wrap) wrap.hidden = true;
-    if (emptyRoot) emptyRoot.innerHTML = emptyState('No invoices yet', 'Invoices will appear here when work is billed. Paid and due invoices both show up here.');
-    return;
-  }
-  if (wrap) wrap.hidden = false;
-  if (emptyRoot) emptyRoot.innerHTML = '';
-  tbody.innerHTML = invoices.map(i =>
-    '<tr>' +
-      '<td>' +
-        '<div class="proj-name">' + escapeHtml(i.number || 'INV-' + i.id) + '</div>' +
-        '<div class="sub">' + ((i.status || '').toLowerCase() === 'paid' && i.paid_at ? 'Paid ' + fmtShortDate(i.paid_at) : (i.due_at ? 'Due ' + fmtShortDate(i.due_at) : '')) + '</div>' +
-      '</td>' +
-      '<td class="mono">' + escapeHtml(i.project_name || '—') + '</td>' +
-      '<td class="num">' + fmtMoney(i.amount_cents) + '</td>' +
-      '<td class="mono">' + (i.issued_at ? fmtShortDate(i.issued_at) : '—') + '</td>' +
-      '<td>' + statusBadge(i.status) + '</td>' +
-      '<td><a class="btn btn-sm" href="' + (i.pdf_url ? escapeHtml(i.pdf_url) : '#') + '"' + (i.pdf_url ? ' target="_blank" rel="noopener"' : '') + '>' + (i.pdf_url ? 'PDF' : 'Open') + '</a></td>' +
-    '</tr>'
-  ).join('');
+
+  const draw = (q) => {
+    const filtered = !q ? invoices : invoices.filter(i => {
+      const hay = [i.number, 'INV-' + (i.id || ''), i.project_name, i.status].filter(Boolean).join(' ');
+      return matchAll(hay, q);
+    });
+    if (countEl) countEl.textContent = q
+      ? filtered.length + (filtered.length === 1 ? ' match' : ' matches')
+      : filtered.length + (filtered.length === 1 ? ' invoice' : ' invoices');
+    if (!invoices.length) {
+      if (wrap) wrap.hidden = true;
+      if (emptyRoot) emptyRoot.innerHTML = emptyState('No invoices yet', 'Invoices will appear here when work is billed. Paid and due invoices both show up here.');
+      return;
+    }
+    if (!filtered.length) {
+      if (wrap) wrap.hidden = true;
+      if (emptyRoot) emptyRoot.innerHTML = emptyState('No matches', 'Try a different search term or clear the search to see everything.');
+      return;
+    }
+    if (wrap) wrap.hidden = false;
+    if (emptyRoot) emptyRoot.innerHTML = '';
+    tbody.innerHTML = filtered.map(i =>
+      '<tr>' +
+        '<td>' +
+          '<div class="proj-name">' + escapeHtml(i.number || 'INV-' + i.id) + '</div>' +
+          '<div class="sub">' + ((i.status || '').toLowerCase() === 'paid' && i.paid_at ? 'Paid ' + fmtShortDate(i.paid_at) : (i.due_at ? 'Due ' + fmtShortDate(i.due_at) : '')) + '</div>' +
+        '</td>' +
+        '<td class="mono">' + escapeHtml(i.project_name || '—') + '</td>' +
+        '<td class="num">' + fmtMoney(i.amount_cents) + '</td>' +
+        '<td class="mono">' + (i.issued_at ? fmtShortDate(i.issued_at) : '—') + '</td>' +
+        '<td>' + statusBadge(i.status) + '</td>' +
+        '<td><a class="btn btn-sm" href="' + (i.pdf_url ? escapeHtml(i.pdf_url) : '#') + '"' + (i.pdf_url ? ' target="_blank" rel="noopener"' : '') + '>' + (i.pdf_url ? 'PDF' : 'Open') + '</a></td>' +
+      '</tr>'
+    ).join('');
+  };
+
+  wireSearchInput(searchEl, draw);
+  draw((searchEl && searchEl.value || '').trim().toLowerCase());
 }
 
 async function renderSettings(user) {
