@@ -785,7 +785,13 @@ async function renderMessages(user) {
   const pane = $('[data-thread-pane]');
   if (!list || !pane) return;
 
-  const state = { threads: [], activeId: null };
+  const state = {
+    threads: [],
+    activeId: null,
+    paneChannel: null,
+    threadsChannel: null,
+    seenIds: new Set(),
+  };
 
   const hashId = () => {
     const h = (location.hash || '').replace(/^#/, '').trim();
@@ -842,12 +848,46 @@ async function renderMessages(user) {
 
     const body = pane.querySelector('[data-msg-body]');
     const messages = await data.getThreadMessages(threadId);
+    state.seenIds = new Set(messages.map(m => m.id));
     if (!messages.length) {
       body.innerHTML = '<div class="empty" style="padding:24px;">No messages yet. Say hello below.</div>';
     } else {
       body.innerHTML = messages.map(m => renderMessageBubble(m, user.id)).join('');
       body.scrollTop = body.scrollHeight;
     }
+
+    if (state.paneChannel) {
+      try { supabase.removeChannel(state.paneChannel); } catch (_) {}
+      state.paneChannel = null;
+    }
+    state.paneChannel = supabase
+      .channel('messages:' + threadId)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: 'thread_id=eq.' + threadId,
+      }, (payload) => {
+        const m = payload.new;
+        if (!m || state.seenIds.has(m.id)) return;
+        state.seenIds.add(m.id);
+        if (state.activeId !== threadId) return;
+        const liveBody = pane.querySelector('[data-msg-body]');
+        if (!liveBody) return;
+        const emptyEl = liveBody.querySelector('.empty');
+        if (emptyEl) liveBody.innerHTML = '';
+        liveBody.insertAdjacentHTML('beforeend', renderMessageBubble(m, user.id));
+        liveBody.scrollTop = liveBody.scrollHeight;
+        if (m.sender_role === 'team') {
+          data.markThreadRead(threadId).then((res) => {
+            if (res.ok) {
+              const t = state.threads.find(x => x.id === threadId);
+              if (t) { t.unread_count = 0; renderList(); }
+            }
+          });
+        }
+      })
+      .subscribe();
 
     // Clear unread flag once the thread is viewed (best-effort; RLS scoped to user).
     if ((thread.unread_count || 0) > 0) {
@@ -891,13 +931,13 @@ async function renderMessages(user) {
           return;
         }
         input.value = '';
+        if (res.message && res.message.id) state.seenIds.add(res.message.id);
         if (body) {
+          const emptyEl = body.querySelector('.empty');
+          if (emptyEl) body.innerHTML = '';
           body.insertAdjacentHTML('beforeend', renderMessageBubble(res.message, user.id));
           body.scrollTop = body.scrollHeight;
         }
-        // Refresh thread metadata so preview / ordering update.
-        await loadThreads();
-        renderList();
       });
     }
   }
@@ -924,6 +964,30 @@ async function renderMessages(user) {
   } else {
     selectThread(preferred);
   }
+
+  let threadsRefreshTimer = null;
+  const refreshThreadsSoon = () => {
+    if (threadsRefreshTimer) return;
+    threadsRefreshTimer = setTimeout(async () => {
+      threadsRefreshTimer = null;
+      await loadThreads();
+      renderList();
+    }, 50);
+  };
+  state.threadsChannel = supabase
+    .channel('threads:' + user.id)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'message_threads',
+      filter: 'user_id=eq.' + user.id,
+    }, refreshThreadsSoon)
+    .subscribe();
+
+  window.addEventListener('beforeunload', () => {
+    try { if (state.paneChannel) supabase.removeChannel(state.paneChannel); } catch (_) {}
+    try { if (state.threadsChannel) supabase.removeChannel(state.threadsChannel); } catch (_) {}
+  });
 
   wireNewThreadButton(user, async (newId) => {
     await loadThreads();
