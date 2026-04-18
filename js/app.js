@@ -414,18 +414,20 @@ function greetingPart() {
 }
 
 async function renderDashboard(user) {
-  const name = orgName(user);
-  const greet = $('[data-greeting]');
-  if (greet) greet.innerHTML = 'Good ' + greetingPart() + ', <em>' + escapeHtml(name) + '</em>.';
   const today = $('[data-today]');
   if (today) today.textContent = 'Dashboard · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  const [projects, activity, invoices, threads] = await Promise.all([
+  const [profile, projects, activity, invoices, threads] = await Promise.all([
+    data.getProfile(user.id),
     data.getProjects(user.id),
     data.getActivity(user.id, 5),
     data.getInvoices(user.id),
     data.getThreads(user.id),
   ]);
+
+  const name = (profile && profile.company_name) || orgName(user);
+  const greet = $('[data-greeting]');
+  if (greet) greet.innerHTML = 'Good ' + greetingPart() + ', <em>' + escapeHtml(name) + '</em>.';
 
   const active = projects.filter(p => !['shipped', 'done', 'archived'].includes((p.status || '').toLowerCase())).length;
   const inReview = projects.filter(p => ['in_review', 'review', 'needs_review'].includes((p.status || '').toLowerCase().replace(/\s+/g, '_'))).length;
