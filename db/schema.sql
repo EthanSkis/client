@@ -86,6 +86,20 @@ create table if not exists public.message_threads (
 );
 create index if not exists message_threads_user_id_idx on public.message_threads(user_id);
 
+-- Actual message bodies live in `messages`; `message_threads.preview` / updated_at
+-- / unread_count are kept in sync by tg_messages_touch_thread below.
+create table if not exists public.messages (
+  id          uuid primary key default gen_random_uuid(),
+  thread_id   uuid not null references public.message_threads(id) on delete cascade,
+  user_id     uuid not null references auth.users(id) on delete cascade,
+  sender_id   uuid references auth.users(id) on delete set null,
+  sender_role text not null default 'client' check (sender_role in ('client','team')),
+  body        text not null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists messages_thread_id_idx on public.messages(thread_id, created_at);
+create index if not exists messages_user_id_idx   on public.messages(user_id);
+
 create table if not exists public.activity (
   id           uuid primary key default gen_random_uuid(),
   user_id      uuid not null references auth.users(id) on delete cascade,
@@ -117,6 +131,31 @@ create trigger tg_profiles_touch     before update on public.profiles        for
 create trigger tg_projects_touch     before update on public.projects        for each row execute function public.tg_touch_updated_at();
 create trigger tg_deliverables_touch before update on public.deliverables    for each row execute function public.tg_touch_updated_at();
 create trigger tg_threads_touch      before update on public.message_threads for each row execute function public.tg_touch_updated_at();
+
+-- ================================
+-- Thread preview / unread sync
+-- ================================
+-- When a message is inserted we push its body into the thread's `preview`,
+-- bump `updated_at`, and maintain `unread_count` from the *thread owner's*
+-- perspective: team replies increment, client replies reset.
+create or replace function public.tg_messages_touch_thread()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  update public.message_threads set
+    preview      = left(regexp_replace(new.body, '\s+', ' ', 'g'), 140),
+    updated_at   = now(),
+    unread_count = case
+                     when new.sender_role = 'team' then coalesce(unread_count, 0) + 1
+                     else 0
+                   end
+  where id = new.thread_id;
+  return new;
+end $$;
+
+drop trigger if exists tg_messages_touch_thread on public.messages;
+create trigger tg_messages_touch_thread
+  after insert on public.messages
+  for each row execute function public.tg_messages_touch_thread();
 
 -- ================================
 -- Auto-create a profile on signup
@@ -177,6 +216,7 @@ alter table public.projects        enable row level security;
 alter table public.deliverables    enable row level security;
 alter table public.invoices        enable row level security;
 alter table public.message_threads enable row level security;
+alter table public.messages        enable row level security;
 alter table public.activity        enable row level security;
 
 drop policy if exists "profiles_self"     on public.profiles;
@@ -184,6 +224,7 @@ drop policy if exists "projects_self"     on public.projects;
 drop policy if exists "deliverables_self" on public.deliverables;
 drop policy if exists "invoices_self"     on public.invoices;
 drop policy if exists "threads_self"      on public.message_threads;
+drop policy if exists "messages_self"     on public.messages;
 drop policy if exists "activity_self"     on public.activity;
 
 create policy "profiles_self"     on public.profiles        for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -191,4 +232,5 @@ create policy "projects_self"     on public.projects        for all using (auth.
 create policy "deliverables_self" on public.deliverables    for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "invoices_self"     on public.invoices        for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "threads_self"      on public.message_threads for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "messages_self"     on public.messages        for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "activity_self"     on public.activity        for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
