@@ -81,6 +81,7 @@ function openModal(opts) {
     onConfirm,
     onCancel,
     initialFocus,
+    wide = false,
   } = opts;
 
   if (activeModalCleanup) activeModalCleanup();
@@ -105,6 +106,14 @@ function openModal(opts) {
     '</div>';
 
   document.body.appendChild(backdrop);
+  if (wide) {
+    const modalEl = backdrop.querySelector('.modal');
+    if (modalEl) {
+      modalEl.style.maxWidth = '760px';
+      modalEl.style.maxHeight = 'calc(100vh - 48px)';
+      modalEl.style.overflowY = 'auto';
+    }
+  }
   const prevOverflow = document.documentElement.style.overflow;
   document.documentElement.style.overflow = 'hidden';
 
@@ -308,6 +317,138 @@ function showNewRequestModal(user, preselectService) {
   });
 }
 
+// --- Project detail modal ---
+async function showProjectDetail(project, user) {
+  // The new-project modal prefixes descriptions with [SVC / 0X \u2014 Label].
+  // Pull that out so we can display it as a nicer eyebrow tag.
+  let svcLabel = '';
+  let brief = (project.description || '').toString();
+  const m = brief.match(/^\[(SVC \/ \d+) \u2014 ([^\]]+)\]\s*/);
+  if (m) { svcLabel = m[1] + ' \u2014 ' + m[2]; brief = brief.slice(m[0].length); }
+
+  openModal({
+    eyebrow: svcLabel || 'Project',
+    title: '<em>' + escapeHtml(project.name || 'Untitled') + '</em>',
+    wide: true,
+    bodyHtml:
+      '<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:24px;">' +
+        statusBadge(project.status) +
+        '<span style="display:inline-flex;align-items:center;gap:10px;flex:1;min-width:200px;">' +
+          '<span class="progress" style="min-width:140px;"><span class="progress-bar" style="width:' + (project.progress || 0) + '%"></span></span>' +
+          '<span class="mono" style="font-size:12px;">' + (project.progress || 0) + '%</span>' +
+        '</span>' +
+      '</div>' +
+      '<section style="margin-bottom:24px;">' +
+        '<div class="modal-eyebrow">Brief</div>' +
+        '<p style="font-family:var(--display);font-size:15px;font-weight:300;line-height:1.55;color:var(--ink);margin-top:8px;white-space:pre-wrap;">' +
+          escapeHtml(brief.trim() || 'No brief provided yet.') +
+        '</p>' +
+      '</section>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;padding:16px 18px;border:1px solid var(--rule);border-radius:2px;background:rgba(243,241,234,0.012);">' +
+        '<div><div class="modal-eyebrow">Next milestone</div>' +
+          '<div style="font-family:var(--display);font-size:15px;margin-top:6px;color:var(--ink);">' + escapeHtml(project.next_milestone || '\u2014') + '</div></div>' +
+        '<div><div class="modal-eyebrow">Status</div>' +
+          '<div style="margin-top:6px;">' + statusBadge(project.status) + '</div></div>' +
+        '<div><div class="modal-eyebrow">Updated</div>' +
+          '<div class="mono" style="margin-top:6px;color:var(--ink);font-size:12px;">' + fmtRelTime(project.updated_at) + '</div></div>' +
+        '<div><div class="modal-eyebrow">Created</div>' +
+          '<div class="mono" style="margin-top:6px;color:var(--ink);font-size:12px;">' + fmtRelTime(project.created_at) + '</div></div>' +
+      '</div>' +
+      '<section style="margin-bottom:24px;" data-pd-deliverables>' +
+        '<div class="modal-eyebrow" style="margin-bottom:10px;">Deliverables</div>' +
+        '<p class="modal-prose" style="font-size:13px;">Loading\u2026</p>' +
+      '</section>' +
+      '<section style="margin-bottom:24px;" data-pd-invoices>' +
+        '<div class="modal-eyebrow" style="margin-bottom:10px;">Invoices</div>' +
+        '<p class="modal-prose" style="font-size:13px;">Loading\u2026</p>' +
+      '</section>' +
+      '<section data-pd-activity>' +
+        '<div class="modal-eyebrow" style="margin-bottom:10px;">Recent activity</div>' +
+        '<p class="modal-prose" style="font-size:13px;">Loading\u2026</p>' +
+      '</section>',
+    confirmLabel: 'Close',
+    cancelLabel: 'Message us',
+    onCancel: () => { location.assign('/messages'); },
+    onConfirm: () => true,
+  });
+
+  const [deliverables, invoices, activity] = await Promise.all([
+    data.getProjectDeliverables(project.id),
+    data.getProjectInvoices(project.id),
+    data.getProjectActivity(project.id, 25),
+  ]);
+
+  const root = document.querySelector('.modal-backdrop');
+  if (!root) return;
+
+  const delEl = root.querySelector('[data-pd-deliverables]');
+  if (delEl) {
+    delEl.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">' +
+        '<div class="modal-eyebrow">Deliverables</div>' +
+        '<span class="mono" style="font-size:10px;color:var(--ink-faint);">' + deliverables.length + '</span>' +
+      '</div>' +
+      (deliverables.length === 0
+        ? '<p class="modal-prose" style="font-size:13px;">No deliverables linked to this project yet.</p>'
+        : '<div class="files">' + deliverables.map(f =>
+            '<a class="file" href="' + (f.url ? escapeHtml(f.url) : '#') + '"' + (f.url ? ' target="_blank" rel="noopener"' : '') + ' style="grid-template-columns:40px 1fr auto auto;">' +
+              '<span class="file-ico">' + escapeHtml((f.file_type || 'FILE').toString().toUpperCase().slice(0,4)) + '</span>' +
+              '<div><div class="file-name">' + escapeHtml(f.name || 'Untitled') + '</div>' +
+              '<div class="file-meta">' + (f.size_label ? escapeHtml(f.size_label) + ' \u00b7 ' : '') + 'Updated ' + fmtRelTime(f.updated_at) + '</div></div>' +
+              statusBadge(f.status) +
+              '<span class="btn btn-sm">Open</span>' +
+            '</a>'
+          ).join('') + '</div>'
+      );
+  }
+
+  const invEl = root.querySelector('[data-pd-invoices]');
+  if (invEl) {
+    invEl.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">' +
+        '<div class="modal-eyebrow">Invoices</div>' +
+        '<span class="mono" style="font-size:10px;color:var(--ink-faint);">' + invoices.length + '</span>' +
+      '</div>' +
+      (invoices.length === 0
+        ? '<p class="modal-prose" style="font-size:13px;">No invoices for this project yet.</p>'
+        : '<div style="display:flex;flex-direction:column;gap:8px;">' + invoices.map(i =>
+            '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid var(--rule);border-radius:2px;background:rgba(243,241,234,0.012);gap:14px;flex-wrap:wrap;">' +
+              '<div><div style="font-family:var(--display);font-size:15px;color:var(--ink);">' + escapeHtml(i.number || 'INV-' + i.id) + '</div>' +
+              '<div class="mono" style="font-size:11px;color:var(--ink-dim);margin-top:3px;">' +
+                ((i.status || '').toLowerCase() === 'paid' && i.paid_at
+                  ? 'Paid ' + fmtShortDate(i.paid_at)
+                  : (i.due_at ? 'Due ' + fmtShortDate(i.due_at) : '')) +
+              '</div></div>' +
+              '<div style="display:flex;align-items:center;gap:14px;">' +
+                statusBadge(i.status) +
+                '<span style="font-family:var(--display);font-size:16px;">' + fmtMoney(i.amount_cents) + '</span>' +
+                (i.pdf_url ? '<a class="btn btn-sm" href="' + escapeHtml(i.pdf_url) + '" target="_blank" rel="noopener">PDF</a>' : '') +
+              '</div>' +
+            '</div>'
+          ).join('') + '</div>'
+      );
+  }
+
+  const actEl = root.querySelector('[data-pd-activity]');
+  if (actEl) {
+    actEl.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">' +
+        '<div class="modal-eyebrow">Recent activity</div>' +
+        '<span class="mono" style="font-size:10px;color:var(--ink-faint);">' + activity.length + '</span>' +
+      '</div>' +
+      (activity.length === 0
+        ? '<p class="modal-prose" style="font-size:13px;">Nothing posted yet for this project.</p>'
+        : '<div class="feed">' + activity.map(a =>
+            '<div class="feed-item' + (a.unread ? ' new' : '') + '">' +
+              '<span class="feed-dot" aria-hidden="true"></span>' +
+              '<div class="feed-text">' + escapeHtml(a.text || '') + '</div>' +
+              '<div class="feed-time">' + fmtRelTime(a.created_at) + '</div>' +
+            '</div>'
+          ).join('') + '</div>'
+      );
+  }
+}
+
 // --- Shell ---
 function injectSprite() {
   if (document.getElementById('clearbot-logo')) return;
@@ -466,7 +607,7 @@ async function renderDashboard(user) {
       projRoot.innerHTML = emptyState('No projects yet', 'Click “+ New Request” above to start your first automation project.');
     } else {
       projRoot.innerHTML = projects.slice(0, 3).map(p =>
-        '<a class="proj-card" href="/projects">' +
+        '<button class="proj-card" type="button" data-project-id="' + escapeHtml(p.id) + '" style="background:transparent;border:0;border-bottom:1px dashed var(--rule);width:100%;text-align:left;cursor:pointer;font-family:inherit;color:inherit;padding:14px 0;">' +
           '<div class="proj-card-head">' +
             '<span class="proj-card-name">' + escapeHtml(p.name || 'Untitled') + '</span>' +
             statusBadge(p.status) +
@@ -475,8 +616,14 @@ async function renderDashboard(user) {
             '<span class="progress"><span class="progress-bar" style="width:' + (p.progress || 0) + '%"></span></span>' +
             '<span class="mono">' + (p.progress || 0) + '%</span>' +
           '</div>' +
-        '</a>'
+        '</button>'
       ).join('');
+      projRoot.querySelectorAll('[data-project-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const proj = projects.find(pp => pp.id === btn.getAttribute('data-project-id'));
+          if (proj) showProjectDetail(proj, user);
+        });
+      });
     }
   }
 }
@@ -495,7 +642,7 @@ async function renderProjects(user) {
   if (wrap) wrap.hidden = false;
   if (emptyRoot) emptyRoot.innerHTML = '';
   tbody.innerHTML = projects.map(p =>
-    '<tr>' +
+    '<tr data-project-row="' + escapeHtml(p.id) + '" style="cursor:pointer;">' +
       '<td>' +
         '<div class="proj-name">' + escapeHtml(p.name || 'Untitled') + '</div>' +
         (p.description ? '<div class="sub">' + escapeHtml(p.description) + '</div>' : '') +
@@ -511,6 +658,13 @@ async function renderProjects(user) {
       '<td class="mono">' + (p.updated_at ? fmtRelTime(p.updated_at) : '—') + '</td>' +
     '</tr>'
   ).join('');
+  tbody.querySelectorAll('[data-project-row]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const id = tr.getAttribute('data-project-row');
+      const proj = projects.find(p => p.id === id);
+      if (proj) showProjectDetail(proj, user);
+    });
+  });
 }
 
 async function renderDeliverables(user) {
