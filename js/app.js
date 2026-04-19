@@ -606,7 +606,7 @@ function showOnboardingIfEmpty(projects) {
 
 async function renderDashboard(user) {
   const today = $('[data-today]');
-  if (today) today.textContent = 'Dashboard \u00b7 ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (today) today.textContent = 'Dashboard · ' + new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   const [profile, projects, activity, invoices, threads] = await Promise.all([
     data.getProfile(user.id),
@@ -637,7 +637,7 @@ async function renderDashboard(user) {
 
   setTile('active-projects', active, active === 0 ? 'None yet' : (active === 1 ? '1 in flight' : active + ' in flight'));
   setTile('pending-review', inReview, inReview === 0 ? 'Nothing waiting' : (inReview === 1 ? '1 awaiting review' : inReview + ' awaiting review'));
-  setTile('open-invoices', openInv.length ? fmtMoney(openAmount) : '$0<small>.00</small>', openInv.length ? (nextDue ? 'Next due \u00b7 ' + fmtShortDate(nextDue) : openInv.length + ' open') : 'Up to date');
+  setTile('open-invoices', openInv.length ? fmtMoney(openAmount) : '$0<small>.00</small>', openInv.length ? (nextDue ? 'Next due · ' + fmtShortDate(nextDue) : openInv.length + ' open') : 'Up to date');
   setTile('unread-messages', unread, unread === 0 ? 'Inbox zero' : ('Across ' + unreadThreads + (unreadThreads === 1 ? ' thread' : ' threads')));
 
   const actRoot = $('[data-activity]');
@@ -661,7 +661,7 @@ async function renderDashboard(user) {
   const projRoot = $('[data-projects-sidebar]');
   if (projRoot) {
     if (!projects.length) {
-      projRoot.innerHTML = emptyState('No projects yet', 'Click \u201c+ New Request\u201d above to start your first automation project.');
+      projRoot.innerHTML = emptyState('No projects yet', 'Click “+ New Request” above to start your first automation project.');
     } else {
       projRoot.innerHTML = projects.slice(0, 3).map(p =>
         '<button class="proj-card" type="button" data-project-id="' + escapeHtml(p.id) + '" style="background:transparent;border:0;border-bottom:1px dashed var(--rule);width:100%;text-align:left;cursor:pointer;font-family:inherit;color:inherit;padding:14px 0;">' +
@@ -721,7 +721,7 @@ async function renderProjects(user) {
       : filtered.length + (filtered.length === 1 ? ' project' : ' projects');
     if (!projects.length) {
       if (wrap) wrap.hidden = true;
-      if (emptyRoot) emptyRoot.innerHTML = emptyState('No projects yet', 'Click \u201c+ New Request\u201d to scope and start your first project with us.');
+      if (emptyRoot) emptyRoot.innerHTML = emptyState('No projects yet', 'Click “+ New Request” to scope and start your first project with us.');
       return;
     }
     if (!filtered.length) {
@@ -744,8 +744,8 @@ async function renderProjects(user) {
             '<span class="mono">' + (p.progress || 0) + '%</span>' +
           '</div>' +
         '</td>' +
-        '<td class="mono">' + escapeHtml(p.next_milestone || '\u2014') + '</td>' +
-        '<td class="mono">' + (p.updated_at ? fmtRelTime(p.updated_at) : '\u2014') + '</td>' +
+        '<td class="mono">' + escapeHtml(p.next_milestone || '—') + '</td>' +
+        '<td class="mono">' + (p.updated_at ? fmtRelTime(p.updated_at) : '—') + '</td>' +
       '</tr>'
     ).join('');
     tbody.querySelectorAll('[data-project-row]').forEach(tr => {
@@ -799,7 +799,7 @@ async function renderDeliverables(user) {
             '<span class="file-ico">' + escapeHtml((f.file_type || 'FILE').toString().toUpperCase().slice(0, 4)) + '</span>' +
             '<div>' +
               '<div class="file-name">' + escapeHtml(f.name || 'Untitled') + '</div>' +
-              '<div class="file-meta">' + (f.size_label ? escapeHtml(f.size_label) + ' \u00b7 ' : '') + 'Updated ' + fmtRelTime(f.updated_at) + '</div>' +
+              '<div class="file-meta">' + (f.size_label ? escapeHtml(f.size_label) + ' · ' : '') + 'Updated ' + fmtRelTime(f.updated_at) + '</div>' +
             '</div>' +
             statusBadge(f.status) +
             '<span class="mono file-col-hide">' + escapeHtml(f.version || '') + '</span>' +
@@ -854,7 +854,7 @@ async function renderMessages(user) {
       '<a class="msg-thread' + (t.id === state.activeId ? ' active' : '') + '" href="#' + escapeHtml(t.id) + '" data-thread-id="' + escapeHtml(t.id) + '">' +
         '<div class="title">' + escapeHtml(t.title || 'Thread') + ((t.unread_count || 0) > 0 ? ' <span class="unread-dot" aria-hidden="true"></span>' : '') + '</div>' +
         '<div class="preview">' + escapeHtml(t.preview || '') + '</div>' +
-        '<div class="meta">' + escapeHtml(t.project_name || 'General') + ' \u00b7 ' + fmtRelTime(t.updated_at) + '</div>' +
+        '<div class="meta">' + escapeHtml(t.project_name || 'General') + ' · ' + fmtRelTime(t.updated_at) + '</div>' +
       '</a>'
     ).join('');
     list.querySelectorAll('[data-thread-id]').forEach(el => {
@@ -883,9 +883,9 @@ async function renderMessages(user) {
         '</div>' +
         statusBadge(thread.status || 'active') +
       '</div>' +
-      '<div class="msg-pane-body" data-msg-body><div class="empty" style="padding:24px;">Loading\u2026</div></div>' +
+      '<div class="msg-pane-body" data-msg-body><div class="empty" style="padding:24px;">Loading…</div></div>' +
       '<form class="msg-composer" data-composer>' +
-        '<textarea class="textarea" data-composer-input placeholder="Type a reply\u2026" rows="2" maxlength="4000"></textarea>' +
+        '<textarea class="textarea" data-composer-input placeholder="Type a reply…" rows="2" maxlength="4000"></textarea>' +
         '<button class="btn btn-primary" type="submit" data-composer-send>Send</button>' +
       '</form>';
 
@@ -959,7 +959,7 @@ async function renderMessages(user) {
         if (!text) return;
         btn.setAttribute('disabled', 'true');
         const prevLabel = btn.textContent;
-        btn.textContent = 'Sending\u2026';
+        btn.textContent = 'Sending…';
         const res = await data.sendMessage({
           threadId,
           userId: user.id,
@@ -1047,7 +1047,7 @@ async function wireNewThreadButton(user, onCreated) {
   const projects = await data.getProjects(user.id);
 
   btn.addEventListener('click', () => {
-    const projectOptionsHtml = ['<option value="">\u2014 No project \u2014</option>']
+    const projectOptionsHtml = ['<option value="">— No project —</option>']
       .concat(projects.map(p =>
         '<option value="' + escapeHtml(p.id) + '">' + escapeHtml(p.name || 'Untitled') + '</option>'
       )).join('');
@@ -1119,8 +1119,8 @@ async function renderInvoices(user) {
 
   setTile('outstanding', invoices.length ? fmtMoney(outstanding) : '$0<small>.00</small>', open.length + (open.length === 1 ? ' open invoice' : ' open invoices'));
   setTile('paid-ytd', fmtMoney(paidYTD), paid.length + (paid.length === 1 ? ' settled' : ' settled'));
-  setTile('next-due', nextDue ? fmtShortDate(nextDue) : '\u2014', nextDue ? (daysAway + (daysAway === 1 ? ' day away' : ' days away')) : 'Nothing due');
-  setTile('payment-method', '\u2014', 'Add via Settings');
+  setTile('next-due', nextDue ? fmtShortDate(nextDue) : '—', nextDue ? (daysAway + (daysAway === 1 ? ' day away' : ' days away')) : 'Nothing due');
+  setTile('payment-method', '—', 'Add via Settings');
 
   const tbody = $('[data-invoices-table]');
   const wrap = $('[data-invoices-wrap]');
@@ -1155,9 +1155,9 @@ async function renderInvoices(user) {
           '<div class="proj-name">' + escapeHtml(i.number || 'INV-' + i.id) + '</div>' +
           '<div class="sub">' + ((i.status || '').toLowerCase() === 'paid' && i.paid_at ? 'Paid ' + fmtShortDate(i.paid_at) : (i.due_at ? 'Due ' + fmtShortDate(i.due_at) : '')) + '</div>' +
         '</td>' +
-        '<td class="mono">' + escapeHtml(i.project_name || '\u2014') + '</td>' +
+        '<td class="mono">' + escapeHtml(i.project_name || '—') + '</td>' +
         '<td class="num">' + fmtMoney(i.amount_cents) + '</td>' +
-        '<td class="mono">' + (i.issued_at ? fmtShortDate(i.issued_at) : '\u2014') + '</td>' +
+        '<td class="mono">' + (i.issued_at ? fmtShortDate(i.issued_at) : '—') + '</td>' +
         '<td>' + statusBadge(i.status) + '</td>' +
         '<td><a class="btn btn-sm" href="' + (i.pdf_url ? escapeHtml(i.pdf_url) : '#') + '"' + (i.pdf_url ? ' target="_blank" rel="noopener"' : '') + '>' + (i.pdf_url ? 'PDF' : 'Open') + '</a></td>' +
       '</tr>'
@@ -1202,7 +1202,7 @@ async function renderSettings(user) {
   if (saveBtn) {
     saveBtn.addEventListener('click', async () => {
       saveBtn.setAttribute('disabled', 'true');
-      if (saveMsg) saveMsg.textContent = 'Saving\u2026';
+      if (saveMsg) saveMsg.textContent = 'Saving…';
       // role is intentionally omitted: it's a system-level field managed by
       // team admins via team.clearbot.io, and enforced by a DB trigger.
       const patch = {
