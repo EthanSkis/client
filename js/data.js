@@ -1,23 +1,43 @@
 import { supabase } from './supabase.js';
 
-// All fetchers fail soft: if the Supabase table doesn't exist yet,
-// or RLS blocks the read, we return an empty result so the UI shows
-// its empty state instead of crashing. Wire up the tables listed in
-// README-DB.md when you're ready to start populating data.
+// Fetchers always return an array so the existing renderers (which call
+// `.length`, `.map`, `.filter`) keep working. When a real backend failure
+// happens we attach a non-enumerable `_error` property to the array so the
+// UI layer can detect it and render an error banner instead of a fake
+// empty state. A missing table is treated as "empty, not broken".
+
+function classifyError(err) {
+  const msg = (err && err.message) || String(err || '');
+  if (/does not exist|relation .* does not exist|schema cache/i.test(msg)) {
+    return 'missing_table';
+  }
+  if (/permission denied|row-level security|rls/i.test(msg)) {
+    return 'rls';
+  }
+  return msg || 'unknown_error';
+}
+
+function withError(arr, error) {
+  if (error) {
+    Object.defineProperty(arr, '_error', {
+      value: error, enumerable: false, writable: false, configurable: false,
+    });
+  }
+  return arr;
+}
 
 async function safeList(fn) {
   try {
     const result = await fn();
     if (result.error) {
-      if (!/does not exist|relation .* does not exist|schema cache/i.test(result.error.message || '')) {
-        console.warn('[portal]', result.error.message);
-      }
-      return [];
+      const kind = classifyError(result.error);
+      if (kind !== 'missing_table') console.warn('[portal]', result.error.message);
+      return withError([], kind === 'missing_table' ? null : kind);
     }
     return result.data || [];
   } catch (e) {
     console.warn('[portal] query error:', e);
-    return [];
+    return withError([], classifyError(e));
   }
 }
 

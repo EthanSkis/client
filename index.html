@@ -78,28 +78,44 @@
       </div>
     </div>
 
-    <div class="tiles">
+    <div class="tiles" role="region" aria-label="Portal summary" aria-live="polite">
       <div class="tile" data-tile="active-projects">
         <div class="label">Active Engagements</div>
-        <div class="val">—</div>
-        <div class="delta">&nbsp;</div>
+        <div class="val"><span class="tile-skel" aria-hidden="true"></span></div>
+        <div class="delta">Loading…</div>
       </div>
       <div class="tile" data-tile="pending-review">
         <div class="label">Awaiting Approval</div>
-        <div class="val">—</div>
-        <div class="delta">&nbsp;</div>
+        <div class="val"><span class="tile-skel" aria-hidden="true"></span></div>
+        <div class="delta">Loading…</div>
       </div>
       <div class="tile" data-tile="open-invoices">
         <div class="label">Open Invoices</div>
-        <div class="val">—</div>
-        <div class="delta">&nbsp;</div>
+        <div class="val"><span class="tile-skel" aria-hidden="true"></span></div>
+        <div class="delta">Loading…</div>
       </div>
       <div class="tile" data-tile="unread-messages">
         <div class="label">Unread Messages</div>
-        <div class="val">—</div>
-        <div class="delta">&nbsp;</div>
+        <div class="val"><span class="tile-skel" aria-hidden="true"></span></div>
+        <div class="delta">Loading…</div>
       </div>
     </div>
+
+    <section class="panel bracketed onboarding-card" data-onboarding-card hidden
+             style="margin-bottom:20px;">
+      <div class="panel-head">
+        <h2>Get your first project off the ground</h2>
+        <button type="button" class="panel-close" data-onboarding-close aria-label="Dismiss onboarding card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-end;">
+        <p class="modal-prose" style="flex:1;min-width:240px;margin:0;">
+          You’re signed in but there’s nothing here yet. Tell us what you need and we’ll scope it together — no commitment until you’ve seen a brief.
+        </p>
+        <button type="button" class="btn btn-primary" data-action="new-project">Start your first request</button>
+      </div>
+    </section>
 
     <section class="panel bracketed services-panel" data-services-panel>
       <div class="panel-head">
